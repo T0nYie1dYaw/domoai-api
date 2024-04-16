@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic-settings
+discord.py-self @ git+https://github.com/dolfies/discord.py-self.git
+
+redis
