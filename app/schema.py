@@ -7,10 +7,6 @@ import discord
 from pydantic import BaseModel
 
 
-class GenIn(BaseModel):
-    prompt: str
-
-
 class VideoModel(enum.Enum):
     FS_V1 = "fs v1"
     ANI_V1_1 = "ani v1.1"

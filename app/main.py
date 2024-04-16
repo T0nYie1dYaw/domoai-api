@@ -1,13 +1,14 @@
 import asyncio
 import io
 import uuid
+from typing import Optional
 
 import discord
 from fastapi import FastAPI, Request, UploadFile, Form, HTTPException
 from starlette import status
 
 from app.cache import RedisCache, MemoryCache, Cache
-from app.schema import GenIn, VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskStatus
+from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskStatus
 from app.settings import get_settings
 from app.user_client import DiscordUserClient
 
@@ -19,10 +20,15 @@ settings = get_settings()
 @app.post("/v1/gen")
 async def gen_api(
         request: Request,
-        params: GenIn
+        image: Optional[UploadFile] = None,
+        prompt: str = Form(...)
 ):
     discord_user_client: DiscordUserClient = request.app.state.discord_user_client
-    interaction = await discord_user_client.gen(params.prompt)
+    if image:
+        image_bytes = await image.read()
+    else:
+        image_bytes = None
+    interaction = await discord_user_client.gen(prompt=prompt, image=io.BytesIO(image_bytes) if image_bytes else None)
     print(f"gen, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
 
     if not interaction.successful:

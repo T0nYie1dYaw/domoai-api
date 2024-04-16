@@ -113,16 +113,21 @@ class DiscordUserClient(discord.Client):
             status=TaskStatus.SUCCESS
         ))
 
-    async def gen(self, prompt: str, image_url: Optional[str] = None) -> Optional[discord.Interaction]:
+    async def gen(
+            self,
+            prompt: str,
+            image: Optional[Union[str, bytes, os.PathLike[Any], io.BufferedIOBase]] = None
+    ) -> Optional[discord.Interaction]:
         command = self.commands.get('gen')
         if not command:
             return None
         options = dict(
             prompt=prompt
         )
-        if image_url:
-            image_file = discord.File(image_url)
+        if image:
+            image_file = discord.File(image)
             uploaded_image_files = await self.channel.upload_files(image_file)
+            image_file.close()
             options['img2img'] = uploaded_image_files[0]
 
         interaction = await command(self.channel, **options)
