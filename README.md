@@ -11,6 +11,6 @@ TODO
 - [x] /gen
   - [x] upscale
   - [x] vary
-- [ ] /real
-  - [ ] upscale
-  - [ ] vary
+- [x] /real
+  - [x] upscale
+  - [x] vary

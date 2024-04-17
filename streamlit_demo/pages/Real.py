@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Callable
+from typing import List
 
 import httpx
 import streamlit as st
@@ -7,10 +7,10 @@ from pydantic import BaseModel
 
 from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons
 
-st.title("Gen")
+st.title("REAL")
 
-if 'gen_result' not in st.session_state:
-    st.session_state.gen_result = None
+if 'real_result' not in st.session_state:
+    st.session_state.real_result = None
 
 if 'uv_results' not in st.session_state:
     st.session_state.uv_results = []
@@ -25,9 +25,18 @@ class Result(BaseModel):
 
 async def gen(prompt, image):
     async with httpx.AsyncClient() as client:
-        response = await client.post('http://127.0.0.1:8000/v1/gen', data={
-            "prompt": prompt
-        }, files={'image': (image.name, image.read(), image.type)} if image else None, timeout=30)
+        if prompt:
+            data = {
+                "prompt": prompt
+            }
+        else:
+            data = None
+        response = await client.post(
+            'http://127.0.0.1:8000/v1/real',
+            data=data,
+            files={'image': (image.name, image.read(), image.type)},
+            timeout=30
+        )
         if not response.is_success:
             st.error(f"Generate Fail: {response}")
             return None
@@ -99,9 +108,9 @@ def on_click_vary(task_id: str, index: int):
 
 
 if submitted:
-    st.session_state.gen_result = None
+    st.session_state.real_result = None
 
-if submitted or st.session_state.gen_result:
+if submitted or st.session_state.real_result:
     if image:
         source_col, result_col = st.columns(2)
         with source_col:
@@ -117,9 +126,9 @@ if submitted or st.session_state.gen_result:
 
     with result_col:
         with st.spinner('Wait for completion...'):
-            if not st.session_state.gen_result:
-                st.session_state.gen_result = asyncio.run(gen(prompt, image))
-            task_id, image_url, upscale_indices, vary_indices = st.session_state.gen_result
+            if not st.session_state.real_result:
+                st.session_state.real_result = asyncio.run(gen(prompt, image))
+            task_id, image_url, upscale_indices, vary_indices = st.session_state.real_result
             result_image.image(image_url)
     build_upscale_vary_buttons(
         task_id=task_id,

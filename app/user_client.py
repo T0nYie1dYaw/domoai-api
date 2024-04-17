@@ -68,6 +68,8 @@ class DiscordUserClient(discord.Client):
             embed: discord.Embed = after.embeds[0]
             if embed.title.startswith('/gen'):
                 await self.handle_gen_result(message=after)
+            elif embed.title.startswith('/real'):
+                await self.handle_real_result(message=after)
             elif embed.title == '/video':
                 await self.handle_video_result(message=after)
             elif embed.title == '/move':
@@ -117,6 +119,41 @@ class DiscordUserClient(discord.Client):
 
         await self.cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
             command=TaskCommand.GEN,
+            channel_id=str(message.channel.id),
+            guild_id=str(message.guild.id) if message.guild else None,
+            message_id=str(message.id),
+            images=[TaskAsset.from_attachment(attachment)],
+            status=TaskStatus.SUCCESS,
+            upscale_custom_ids=upscale_custom_ids,
+            vary_custom_ids=vary_custom_ids
+        ))
+
+    async def handle_real_result(
+            self,
+            message: discord.Message
+    ):
+        if not message.attachments:
+            return
+        attachment = message.attachments[0]
+
+        task_id = await self.cache.get_task_id_by_message_id(message_id=str(message.id))
+        if not task_id:
+            return
+        upscale_custom_ids = {}
+        vary_custom_ids = {}
+        for row in message.components:
+            for component in row.children:
+                if component.disabled or not component.label or not component.custom_id:
+                    continue
+                if component.label.startswith("U"):
+                    upscale_custom_ids[component.label] = component.custom_id
+                elif component.label.startswith("Vary"):
+                    vary_custom_ids["V1"] = component.custom_id
+                elif component.label.startswith("V"):
+                    vary_custom_ids[component.label] = component.custom_id
+
+        await self.cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
+            command=TaskCommand.REAL,
             channel_id=str(message.channel.id),
             guild_id=str(message.guild.id) if message.guild else None,
             message_id=str(message.id),
@@ -201,6 +238,25 @@ class DiscordUserClient(discord.Client):
             uploaded_image_files = await self.channel.upload_files(image)
             image.close()
             options['img2img'] = uploaded_image_files[0]
+
+        interaction = await command(self.channel, **options)
+        return interaction
+
+    async def real(
+            self,
+            image: discord.File,
+            prompt: Optional[str] = None
+    ) -> Optional[discord.Interaction]:
+        command = self.commands.get('real')
+        if not command:
+            return None
+        uploaded_image_files = await self.channel.upload_files(image)
+        image.close()
+        options = dict(
+            image=uploaded_image_files[0]
+        )
+        if prompt:
+            options['prompt'] = prompt
 
         interaction = await command(self.channel, **options)
         return interaction

@@ -76,6 +76,7 @@ class TaskStatus(enum.Enum):
 
 class TaskCommand(enum.Enum):
     GEN = "GEN"
+    REAL = "REAL"
     MOVE = "MOVE"
     VIDEO = "VIDEO"
 

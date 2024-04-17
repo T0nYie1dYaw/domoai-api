@@ -71,6 +71,31 @@ async def gen_api(
     return result
 
 
+@app.post("/v1/real")
+async def real_api(
+        request: Request,
+        image: UploadFile = Form(...),
+        prompt: Optional[str] = Form(default=None)
+):
+    discord_user_client: DiscordUserClient = request.app.state.discord_user_client
+    image_bytes = await image.read()
+    image_file = discord.File(io.BytesIO(image_bytes), filename=image.filename)
+    interaction = await discord_user_client.real(prompt=prompt, image=image_file)
+    print(f"real, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
+
+    if not interaction.successful:
+        # TODO:
+        return {"success": interaction.successful}
+
+    result = await __did_send_interaction(
+        wait_message_desc_keyword='Waiting to start',
+        command=TaskCommand.GEN,
+        cache=request.app.state.cache,
+        discord_user_client=discord_user_client
+    )
+    return result
+
+
 @app.post("/v1/upscale")
 async def upscale_api(
         request: Request,
