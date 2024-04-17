@@ -36,10 +36,8 @@ async def gen_api(
         # TODO:
         return {"success": interaction.successful}
 
-    message: discord.Message = await discord_user_client.wait_for(
-        'message',
-        check=lambda m: m.embeds and ('Waiting to start' in m.embeds[0].description),
-        timeout=12,
+    message: discord.Message = await discord_user_client.wait_for_generating_message(
+        embeds_desc_keyword='Waiting to start'
     )
     cache: Cache = request.app.state.cache
     task_id = str(uuid.uuid4())
@@ -83,10 +81,8 @@ async def video_api(
         # TODO:
         return {"success": interaction.successful}
 
-    message: discord.Message = await discord_user_client.wait_for(
-        'message',
-        check=lambda m: m.embeds and ('Generating' in m.embeds[0].description),
-        timeout=12,
+    message: discord.Message = await discord_user_client.wait_for_generating_message(
+        embeds_desc_keyword='Generating'
     )
     cache: Cache = request.app.state.cache
     task_id = str(uuid.uuid4())
@@ -132,10 +128,8 @@ async def move_api(
         # TODO:
         return {"success": interaction.successful}
 
-    message: discord.Message = await discord_user_client.wait_for(
-        'message',
-        check=lambda m: m.embeds and ('Generating' in m.embeds[0].description),
-        timeout=12,
+    message: discord.Message = await discord_user_client.wait_for_generating_message(
+        embeds_desc_keyword='Generating'
     )
     cache: Cache = request.app.state.cache
     task_id = str(uuid.uuid4())

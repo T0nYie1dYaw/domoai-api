@@ -21,7 +21,10 @@ class DiscordUserClient(discord.Client):
         self.channel = None
         self.cache = cache
 
+        self.bot_user_id = None
+
     async def setup_hook(self):
+        self.bot_user_id = self.user.id
         self.guild = await self.fetch_guild(self.guild_id)
         self.channel = await self.fetch_channel(self.channel_id)
         await self.__init_slash_commands()
@@ -68,6 +71,20 @@ class DiscordUserClient(discord.Client):
             await self.handle_video_result(message=after)
         elif 'Result:' in after.content and 'Image:' in after.content and 'Video:' in after.content:
             await self.handle_move_result(message=after)
+
+    async def wait_for_generating_message(self, embeds_desc_keyword: str) -> discord.Message:
+        def check(message: discord.Message):
+            if not message.embeds or not message.mentions:
+                return False
+            if message.mentions[0].id != self.bot_user_id:
+                return False
+            return embeds_desc_keyword in message.embeds[0].description
+
+        return await self.wait_for(
+            'message',
+            check=check,
+            timeout=20
+        )
 
     async def handle_gen_result(
             self,
