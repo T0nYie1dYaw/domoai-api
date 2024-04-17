@@ -33,7 +33,7 @@ with st.form("video_form", border=True):
 
     model = st.selectbox(label="Model", options=list(map(lambda x: x.value, MoveModel)))
 
-    prompt = st.text_input(label="Prompt")
+    prompt = st.text_area(label="Prompt")
 
     image = st.file_uploader(label="Source Image", type=['jpg', 'png'])
     video = st.file_uploader(label="Source Video", type=['mp4'])

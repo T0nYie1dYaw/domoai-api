@@ -24,7 +24,7 @@ async def gen(prompt, image):
 
 
 with st.form("gen_form", border=False):
-    prompt = st.text_input(label="Prompt")
+    prompt = st.text_area(label="Prompt")
     image = st.file_uploader(label="Reference Image", type=['jpg', 'png'])
     submitted = st.form_submit_button("Submit")
 

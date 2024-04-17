@@ -8,13 +8,39 @@ from fastapi import FastAPI, Request, UploadFile, Form, HTTPException
 from starlette import status
 
 from app.cache import RedisCache, MemoryCache, Cache
-from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskStatus, CreateTaskOut, MoveModel
+from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskStatus, CreateTaskOut, MoveModel, \
+    TaskCommand
 from app.settings import get_settings
 from app.user_client import DiscordUserClient
 
 app = FastAPI()
 
 settings = get_settings()
+
+
+async def __did_send_interaction(
+        wait_message_desc_keyword: str,
+        discord_user_client: DiscordUserClient,
+        cache: Cache,
+        command: TaskCommand
+) -> CreateTaskOut:
+    message: discord.Message = await discord_user_client.wait_for_generating_message(
+        embeds_desc_keyword=wait_message_desc_keyword
+    )
+    task_id = str(uuid.uuid4())
+    await cache.set_message_id2task_id(message_id=str(message.id), task_id=task_id)
+    await cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
+        command=command,
+        status=TaskStatus.RUNNING,
+        channel_id=str(discord_user_client.channel_id),
+        guild_id=str(discord_user_client.guild_id),
+        message_id=str(message.id)
+    ))
+    return CreateTaskOut(
+        success=True,
+        task_id=task_id,
+        message_id=str(message.id)
+    )
 
 
 @app.post("/v1/gen")
@@ -36,23 +62,13 @@ async def gen_api(
         # TODO:
         return {"success": interaction.successful}
 
-    message: discord.Message = await discord_user_client.wait_for_generating_message(
-        embeds_desc_keyword='Waiting to start'
+    result = await __did_send_interaction(
+        wait_message_desc_keyword='Waiting to start',
+        command=TaskCommand.GEN,
+        cache=request.app.state.cache,
+        discord_user_client=discord_user_client
     )
-    cache: Cache = request.app.state.cache
-    task_id = str(uuid.uuid4())
-    await cache.set_message_id2task_id(message_id=str(message.id), task_id=task_id)
-    await cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
-        status=TaskStatus.RUNNING,
-        channel_id=str(discord_user_client.channel_id),
-        guild_id=str(discord_user_client.guild_id),
-        message_id=str(message.id)
-    ))
-    return CreateTaskOut(
-        success=interaction.successful,
-        task_id=task_id,
-        message_id=str(message.id)
-    )
+    return result
 
 
 @app.post("/v1/video")
@@ -81,23 +97,13 @@ async def video_api(
         # TODO:
         return {"success": interaction.successful}
 
-    message: discord.Message = await discord_user_client.wait_for_generating_message(
-        embeds_desc_keyword='Generating'
+    result = await __did_send_interaction(
+        wait_message_desc_keyword='Generating',
+        command=TaskCommand.VIDEO,
+        cache=request.app.state.cache,
+        discord_user_client=discord_user_client
     )
-    cache: Cache = request.app.state.cache
-    task_id = str(uuid.uuid4())
-    await cache.set_message_id2task_id(message_id=str(message.id), task_id=task_id)
-    await cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
-        status=TaskStatus.RUNNING,
-        channel_id=str(discord_user_client.channel_id),
-        guild_id=str(discord_user_client.guild_id),
-        message_id=str(message.id)
-    ))
-    return CreateTaskOut(
-        success=interaction.successful,
-        task_id=task_id,
-        message_id=str(message.id)
-    )
+    return result
 
 
 @app.post("/v1/move")
@@ -128,23 +134,13 @@ async def move_api(
         # TODO:
         return {"success": interaction.successful}
 
-    message: discord.Message = await discord_user_client.wait_for_generating_message(
-        embeds_desc_keyword='Generating'
+    result = await __did_send_interaction(
+        wait_message_desc_keyword='Generating',
+        command=TaskCommand.MOVE,
+        cache=request.app.state.cache,
+        discord_user_client=discord_user_client
     )
-    cache: Cache = request.app.state.cache
-    task_id = str(uuid.uuid4())
-    await cache.set_message_id2task_id(message_id=str(message.id), task_id=task_id)
-    await cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
-        status=TaskStatus.RUNNING,
-        channel_id=str(discord_user_client.channel_id),
-        guild_id=str(discord_user_client.guild_id),
-        message_id=str(message.id)
-    ))
-    return CreateTaskOut(
-        success=interaction.successful,
-        task_id=task_id,
-        message_id=str(message.id)
-    )
+    return result
 
 
 @app.get("/v1/task-data/{task_id}")

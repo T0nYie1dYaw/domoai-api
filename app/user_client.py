@@ -4,7 +4,8 @@ from typing import Dict, List, Optional
 import discord
 
 from app.cache import Cache
-from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskAsset, TaskStatus, MoveModel
+from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskAsset, TaskStatus, MoveModel, \
+    TaskCommand
 
 
 class DiscordUserClient(discord.Client):
@@ -99,6 +100,7 @@ class DiscordUserClient(discord.Client):
             return
 
         await self.cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
+            command=TaskCommand.GEN,
             channel_id=str(message.channel.id),
             guild_id=str(message.guild.id) if message.guild else None,
             message_id=str(message.id),
@@ -128,6 +130,7 @@ class DiscordUserClient(discord.Client):
             )
 
         await self.cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
+            command=TaskCommand.VIDEO,
             channel_id=str(message.channel.id),
             guild_id=str(message.guild.id) if message.guild else None,
             message_id=str(message.id),
@@ -157,6 +160,7 @@ class DiscordUserClient(discord.Client):
             )
 
         await self.cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
+            command=TaskCommand.MOVE,
             channel_id=str(message.channel.id),
             guild_id=str(message.guild.id) if message.guild else None,
             message_id=str(message.id),

@@ -74,7 +74,14 @@ class TaskStatus(enum.Enum):
     SUCCESS = "SUCCESS"
 
 
+class TaskCommand(enum.Enum):
+    GEN = "GEN"
+    MOVE = "MOVE"
+    VIDEO = "VIDEO"
+
+
 class TaskCacheData(BaseModel):
+    command: TaskCommand
     channel_id: str
     guild_id: Optional[str]
     message_id: str
