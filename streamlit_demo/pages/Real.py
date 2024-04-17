@@ -29,11 +29,11 @@ async def real(prompt, image, mode):
         if prompt:
             data = {
                 "prompt": prompt,
-                "mode": mode
+                "mode": mode if mode != 'auto' else None
             }
         else:
             data = {
-                "mode": mode
+                "mode": mode if mode != 'auto' else None
             }
         response = await client.post(
             'http://127.0.0.1:8000/v1/real',
@@ -84,7 +84,7 @@ async def vary(task_id, index):
 
 
 with st.form("gen_form", border=False):
-    mode = st.radio(label="Mode", options=list(map(lambda x: x.value, Mode)), horizontal=True)
+    mode = st.radio(label="Mode", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
 
     prompt = st.text_area(label="Prompt")
     image = st.file_uploader(label="Reference Image", type=['jpg', 'png'])

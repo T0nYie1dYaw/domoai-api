@@ -28,7 +28,7 @@ async def gen(prompt, image, mode):
     async with httpx.AsyncClient() as client:
         response = await client.post('http://127.0.0.1:8000/v1/gen', data={
             "prompt": prompt,
-            "mode": mode
+            "mode": mode if mode != 'auto' else None
         }, files={'image': (image.name, image.read(), image.type)} if image else None, timeout=30)
         if not response.is_success:
             st.error(f"Generate Fail: {response}")
@@ -73,7 +73,7 @@ async def vary(task_id, index):
 
 
 with st.form("gen_form", border=False):
-    mode = st.radio(label="Mode", options=list(map(lambda x: x.value, Mode)), horizontal=True)
+    mode = st.radio(label="Mode", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
     prompt = st.text_area(label="Prompt")
     image = st.file_uploader(label="Reference Image", type=['jpg', 'png'])
     submitted = st.form_submit_button("Submit")

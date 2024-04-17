@@ -17,7 +17,7 @@ async def run_video(prompt, refer_mode, model, length, video: UploadedFile, mode
             "refer_mode": refer_mode,
             "model": model,
             "length": length,
-            "mode": mode
+            "mode": mode if mode != 'auto' else None
         }, files={'video': (video.name, video.read(), video.type)}, timeout=30)
         if not response.is_success:
             st.error(f"Generate Fail: {response}")
@@ -30,7 +30,7 @@ async def run_video(prompt, refer_mode, model, length, video: UploadedFile, mode
 
 
 with st.form("video_form", border=True):
-    mode = st.radio(label="Mode", options=list(map(lambda x: x.value, Mode)), horizontal=True)
+    mode = st.radio(label="Mode", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
 
     length = st.radio(label="Length", options=list(map(lambda x: x.value, VideoLength)), horizontal=True)
 

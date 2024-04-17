@@ -16,7 +16,7 @@ async def run_move(prompt, model, length, video: UploadedFile, image: UploadedFi
             "prompt": prompt,
             "model": model,
             "length": length,
-            "mode": mode
+            "mode": mode if mode != 'auto' else None
         }, files={'video': (video.name, video.read(), video.type), 'image': (image.name, image.read(), image.type)},
                                      timeout=30)
         if not response.is_success:
@@ -30,7 +30,7 @@ async def run_move(prompt, model, length, video: UploadedFile, image: UploadedFi
 
 
 with st.form("move_form", border=True):
-    mode = st.radio(label="Mode", options=list(map(lambda x: x.value, Mode)), horizontal=True)
+    mode = st.radio(label="Mode", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
 
     length = st.radio(label="Length", options=list(map(lambda x: x.value, VideoLength)), horizontal=True)
 
