@@ -1,12 +1,10 @@
-import io
-import os
 import re
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional
 
 import discord
 
 from app.cache import Cache
-from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskAsset, TaskStatus
+from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskAsset, TaskStatus, MoveModel
 
 
 class DiscordUserClient(discord.Client):
@@ -64,8 +62,12 @@ class DiscordUserClient(discord.Client):
                 await self.handle_gen_result(message=after)
             elif embed.title == '/video':
                 await self.handle_video_result(message=after)
+            elif embed.title == '/move':
+                await self.handle_move_result(message=after)
         elif 'After:' in after.content and 'Before:' in after.content:
             await self.handle_video_result(message=after)
+        elif 'Result:' in after.content and 'Image:' in after.content and 'Video:' in after.content:
+            await self.handle_move_result(message=after)
 
     async def handle_gen_result(
             self,
@@ -116,10 +118,39 @@ class DiscordUserClient(discord.Client):
             status=TaskStatus.SUCCESS
         ))
 
+    async def handle_move_result(
+            self,
+            message: discord.Message
+    ):
+        task_id = await self.cache.get_task_id_by_message_id(message_id=str(message.id))
+        if not task_id:
+            return
+
+        if message.attachments:
+            attachment = message.attachments[0]
+            asset = TaskAsset.from_attachment(attachment)
+        else:
+            match = re.search(r"Result:.*?(https:.*)", message.content)
+            if not match:
+                return
+            video_url = match.group(1)
+            asset = TaskAsset(
+                url=video_url,
+                proxy_url=video_url
+            )
+
+        await self.cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
+            channel_id=str(message.channel.id),
+            guild_id=str(message.guild.id) if message.guild else None,
+            message_id=str(message.id),
+            videos=[asset],
+            status=TaskStatus.SUCCESS
+        ))
+
     async def gen(
             self,
             prompt: str,
-            image: Optional[Union[str, bytes, os.PathLike[Any], io.BufferedIOBase]] = None
+            image: Optional[discord.File] = None
     ) -> Optional[discord.Interaction]:
         command = self.commands.get('gen')
         if not command:
@@ -128,17 +159,39 @@ class DiscordUserClient(discord.Client):
             prompt=prompt
         )
         if image:
-            image_file = discord.File(image)
-            uploaded_image_files = await self.channel.upload_files(image_file)
-            image_file.close()
+            uploaded_image_files = await self.channel.upload_files(image)
+            image.close()
             options['img2img'] = uploaded_image_files[0]
 
         interaction = await command(self.channel, **options)
         return interaction
 
+    async def move(
+            self,
+            image: discord.File,
+            video: discord.File,
+            prompt: str,
+            model: MoveModel,
+            length: VideoLength
+    ) -> Optional[discord.Interaction]:
+        command = self.commands.get('move')
+        if not command:
+            return None
+        uploaded_images = await self.channel.upload_files(image)
+        image.close()
+
+        uploaded_videos = await self.channel.upload_files(video)
+        video.close()
+        options = dict(
+            prompt=f"{prompt} --{model.value} --length {length.value}",
+            video=uploaded_videos[0],
+            image=uploaded_images[0]
+        )
+        return await command(self.channel, **options)
+
     async def video(
             self,
-            video: Union[str, bytes, os.PathLike[Any], io.BufferedIOBase],
+            video: discord.File,
             prompt: str,
             model: VideoModel,
             refer_mode: VideoReferMode,
@@ -147,9 +200,8 @@ class DiscordUserClient(discord.Client):
         command = self.commands.get('video')
         if not command:
             return None
-        video_file = discord.File(video)
-        uploaded_videos = await self.channel.upload_files(video_file)
-        video_file.close()
+        uploaded_videos = await self.channel.upload_files(video)
+        video.close()
         if refer_mode == VideoReferMode.REFER_TO_MY_PROMPT_MORE:
             refer_mode_value = 'p'
         else:

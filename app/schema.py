@@ -30,6 +30,13 @@ class VideoModel(enum.Enum):
     ILLUS_V8 = "illus v8"
 
 
+class MoveModel(enum.Enum):
+    REAL_V1 = "real v1"
+    ANI_V6 = "ani v6"
+    ANI_V2 = "ani v2"
+    ANI_V1_1 = "ani v1.1"
+
+
 class VideoReferMode(enum.Enum):
     REFER_TO_SOURCE_VIDEO_MORE = "VIDEO_MORE"
     REFER_TO_MY_PROMPT_MORE = "PROMPT_MORE"
@@ -74,3 +81,9 @@ class TaskCacheData(BaseModel):
     images: Optional[List[TaskAsset]] = None
     videos: Optional[List[TaskAsset]] = None
     status: TaskStatus
+
+
+class CreateTaskOut(BaseModel):
+    success: bool
+    task_id: str
+    message_id: str

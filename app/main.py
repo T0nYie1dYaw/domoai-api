@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request, UploadFile, Form, HTTPException
 from starlette import status
 
 from app.cache import RedisCache, MemoryCache, Cache
-from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskStatus
+from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskStatus, CreateTaskOut, MoveModel
 from app.settings import get_settings
 from app.user_client import DiscordUserClient
 
@@ -26,9 +26,10 @@ async def gen_api(
     discord_user_client: DiscordUserClient = request.app.state.discord_user_client
     if image:
         image_bytes = await image.read()
+        image_file = discord.File(io.BytesIO(image_bytes), filename=image.filename)
     else:
-        image_bytes = None
-    interaction = await discord_user_client.gen(prompt=prompt, image=io.BytesIO(image_bytes) if image_bytes else None)
+        image_file = None
+    interaction = await discord_user_client.gen(prompt=prompt, image=image_file)
     print(f"gen, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
 
     if not interaction.successful:
@@ -49,11 +50,11 @@ async def gen_api(
         guild_id=str(discord_user_client.guild_id),
         message_id=str(message.id)
     ))
-    return {
-        "success": interaction.successful,
-        "task_id": task_id,
-        "message_id": str(message.id)
-    }
+    return CreateTaskOut(
+        success=interaction.successful,
+        task_id=task_id,
+        message_id=str(message.id)
+    )
 
 
 @app.post("/v1/video")
@@ -68,9 +69,10 @@ async def video_api(
     # size_mb = video.size / 1024.0 / 1024.0
     discord_user_client: DiscordUserClient = request.app.state.discord_user_client
     video_bytes = await video.read()
+    video_file = discord.File(io.BytesIO(video_bytes), filename=video.filename)
     interaction = await discord_user_client.video(
         prompt=prompt,
-        video=io.BytesIO(video_bytes),
+        video=video_file,
         model=model,
         refer_mode=refer_mode,
         length=length
@@ -95,11 +97,60 @@ async def video_api(
         guild_id=str(discord_user_client.guild_id),
         message_id=str(message.id)
     ))
-    return {
-        "success": interaction.successful,
-        "task_id": task_id,
-        "message_id": str(message.id)
-    }
+    return CreateTaskOut(
+        success=interaction.successful,
+        task_id=task_id,
+        message_id=str(message.id)
+    )
+
+
+@app.post("/v1/move")
+async def move_api(
+        request: Request,
+        image: UploadFile,
+        video: UploadFile,
+        model: MoveModel = Form(...),
+        length: VideoLength = Form(...),
+        prompt: str = Form(...)
+):
+    # size_mb = video.size / 1024.0 / 1024.0
+    discord_user_client: DiscordUserClient = request.app.state.discord_user_client
+    image_bytes = await image.read()
+    image_file = discord.File(io.BytesIO(image_bytes), filename=image.filename)
+    video_bytes = await video.read()
+    video_file = discord.File(io.BytesIO(video_bytes), filename=video.filename)
+    interaction = await discord_user_client.move(
+        prompt=prompt,
+        image=image_file,
+        video=video_file,
+        model=model,
+        length=length
+    )
+    print(f"move, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
+
+    if not interaction.successful:
+        # TODO:
+        return {"success": interaction.successful}
+
+    message: discord.Message = await discord_user_client.wait_for(
+        'message',
+        check=lambda m: m.embeds and ('Generating' in m.embeds[0].description),
+        timeout=12,
+    )
+    cache: Cache = request.app.state.cache
+    task_id = str(uuid.uuid4())
+    await cache.set_message_id2task_id(message_id=str(message.id), task_id=task_id)
+    await cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
+        status=TaskStatus.RUNNING,
+        channel_id=str(discord_user_client.channel_id),
+        guild_id=str(discord_user_client.guild_id),
+        message_id=str(message.id)
+    ))
+    return CreateTaskOut(
+        success=interaction.successful,
+        task_id=task_id,
+        message_id=str(message.id)
+    )
 
 
 @app.get("/v1/task-data/{task_id}")
