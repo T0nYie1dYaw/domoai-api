@@ -9,8 +9,8 @@ TODO
 - [x] /move
 - [ ] /animate
 - [x] /gen
-  - [ ] upscale
-  - [ ] vary
+  - [x] upscale
+  - [x] vary
 - [ ] /real
   - [ ] upscale
   - [ ] vary
