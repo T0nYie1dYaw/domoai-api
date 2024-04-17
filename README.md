@@ -12,6 +12,7 @@ Feature
     + `/gen`
     + `/real`
 - Support `upscale` and `vary`
+- Support `FAST` mode and `RELAX` mode
 - Streamlit Demo provided
 
 TODO

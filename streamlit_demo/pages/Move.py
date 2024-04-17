@@ -4,18 +4,19 @@ import httpx
 import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from app.schema import VideoLength, MoveModel
+from app.schema import VideoLength, MoveModel, Mode
 from streamlit_demo.utils import polling_check_state
 
 st.title("Move")
 
 
-async def run_move(prompt, model, length, video: UploadedFile, image: UploadedFile):
+async def run_move(prompt, model, length, video: UploadedFile, image: UploadedFile, mode):
     async with httpx.AsyncClient() as client:
         response = await client.post('http://127.0.0.1:8000/v1/move', data={
             "prompt": prompt,
             "model": model,
-            "length": length
+            "length": length,
+            "mode": mode
         }, files={'video': (video.name, video.read(), video.type), 'image': (image.name, image.read(), image.type)},
                                      timeout=30)
         if not response.is_success:
@@ -28,7 +29,9 @@ async def run_move(prompt, model, length, video: UploadedFile, image: UploadedFi
     return result['videos'][0]['proxy_url']
 
 
-with st.form("video_form", border=True):
+with st.form("move_form", border=True):
+    mode = st.radio(label="Mode", options=list(map(lambda x: x.value, Mode)), horizontal=True)
+
     length = st.radio(label="Length", options=list(map(lambda x: x.value, VideoLength)), horizontal=True)
 
     model = st.selectbox(label="Model", options=list(map(lambda x: x.value, MoveModel)))
@@ -61,7 +64,7 @@ if submitted:
             # asyncio.run(asyncio.sleep(5))
             # result_video.video(video)
             video_url = asyncio.run(
-                run_move(prompt=prompt, model=model, length=length, video=video, image=image))
+                run_move(prompt=prompt, model=model, length=length, video=video, image=image, mode=mode))
             if video_url:
                 result_video.video(video_url)
     st.success('Done!')

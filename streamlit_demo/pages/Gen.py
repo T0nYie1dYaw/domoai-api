@@ -5,6 +5,7 @@ import httpx
 import streamlit as st
 from pydantic import BaseModel
 
+from app.schema import Mode
 from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons
 
 st.title("Gen")
@@ -23,10 +24,11 @@ class Result(BaseModel):
     vary_indices: List[int]
 
 
-async def gen(prompt, image):
+async def gen(prompt, image, mode):
     async with httpx.AsyncClient() as client:
         response = await client.post('http://127.0.0.1:8000/v1/gen', data={
-            "prompt": prompt
+            "prompt": prompt,
+            "mode": mode
         }, files={'image': (image.name, image.read(), image.type)} if image else None, timeout=30)
         if not response.is_success:
             st.error(f"Generate Fail: {response}")
@@ -71,6 +73,7 @@ async def vary(task_id, index):
 
 
 with st.form("gen_form", border=False):
+    mode = st.radio(label="Mode", options=list(map(lambda x: x.value, Mode)), horizontal=True)
     prompt = st.text_area(label="Prompt")
     image = st.file_uploader(label="Reference Image", type=['jpg', 'png'])
     submitted = st.form_submit_button("Submit")
@@ -118,7 +121,7 @@ if submitted or st.session_state.gen_result:
     with result_col:
         with st.spinner('Wait for completion...'):
             if not st.session_state.gen_result:
-                st.session_state.gen_result = asyncio.run(gen(prompt, image))
+                st.session_state.gen_result = asyncio.run(gen(prompt, image, mode))
             task_id, image_url, upscale_indices, vary_indices = st.session_state.gen_result
             result_image.image(image_url)
     build_upscale_vary_buttons(

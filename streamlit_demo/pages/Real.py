@@ -5,6 +5,7 @@ import httpx
 import streamlit as st
 from pydantic import BaseModel
 
+from app.schema import Mode
 from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons
 
 st.title("REAL")
@@ -23,14 +24,17 @@ class Result(BaseModel):
     vary_indices: List[int]
 
 
-async def gen(prompt, image):
+async def real(prompt, image, mode):
     async with httpx.AsyncClient() as client:
         if prompt:
             data = {
-                "prompt": prompt
+                "prompt": prompt,
+                "mode": mode
             }
         else:
-            data = None
+            data = {
+                "mode": mode
+            }
         response = await client.post(
             'http://127.0.0.1:8000/v1/real',
             data=data,
@@ -80,6 +84,8 @@ async def vary(task_id, index):
 
 
 with st.form("gen_form", border=False):
+    mode = st.radio(label="Mode", options=list(map(lambda x: x.value, Mode)), horizontal=True)
+
     prompt = st.text_area(label="Prompt")
     image = st.file_uploader(label="Reference Image", type=['jpg', 'png'])
     submitted = st.form_submit_button("Submit")
@@ -127,7 +133,7 @@ if submitted or st.session_state.real_result:
     with result_col:
         with st.spinner('Wait for completion...'):
             if not st.session_state.real_result:
-                st.session_state.real_result = asyncio.run(gen(prompt, image))
+                st.session_state.real_result = asyncio.run(real(prompt, image, mode))
             task_id, image_url, upscale_indices, vary_indices = st.session_state.real_result
             result_image.image(image_url)
     build_upscale_vary_buttons(

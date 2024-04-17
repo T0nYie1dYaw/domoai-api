@@ -4,18 +4,19 @@ import httpx
 import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from app.schema import AnimateLength, AnimateIntensity
+from app.schema import AnimateLength, AnimateIntensity, Mode
 from streamlit_demo.utils import polling_check_state
 
 st.title("Animate")
 
 
-async def run_animate(prompt, intensity, length, image: UploadedFile):
+async def run_animate(prompt, intensity, length, image: UploadedFile, mode):
     async with httpx.AsyncClient() as client:
         response = await client.post('http://127.0.0.1:8000/v1/animate', data={
             "prompt": prompt,
             "intensity": intensity,
-            "length": length
+            "length": length,
+            "mode": mode
         }, files={'image': (image.name, image.read(), image.type)}, timeout=30)
         if not response.is_success:
             st.error(f"Generate Fail: {response}")
@@ -28,6 +29,8 @@ async def run_animate(prompt, intensity, length, image: UploadedFile):
 
 
 with st.form("video_form", border=True):
+    mode = st.radio(label="Mode", options=list(map(lambda x: x.value, Mode)), horizontal=True)
+
     length = st.radio(label="Length", options=list(map(lambda x: x.value, AnimateLength)), horizontal=True)
 
     intensity = st.radio(label="Intensity", options=list(map(lambda x: x.value, AnimateIntensity)), horizontal=True)
@@ -52,7 +55,7 @@ if submitted:
     with result_col:
         with st.spinner('Wait for completion...'):
             videos_url = asyncio.run(
-                run_animate(prompt=prompt, intensity=intensity, length=length, image=image))
+                run_animate(prompt=prompt, intensity=intensity, length=length, image=image, mode=mode))
             if videos_url:
                 result_video.video(videos_url)
     st.success('Done!')

@@ -9,7 +9,7 @@ from starlette import status
 
 from app.cache import RedisCache, MemoryCache, Cache
 from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskStatus, CreateTaskOut, MoveModel, \
-    TaskCommand, TaskStateOut, AnimateLength, AnimateIntensity
+    TaskCommand, TaskStateOut, AnimateLength, AnimateIntensity, Mode
 from app.settings import get_settings
 from app.user_client import DiscordUserClient
 
@@ -47,7 +47,8 @@ async def __did_send_interaction(
 async def gen_api(
         request: Request,
         image: Optional[UploadFile] = None,
-        prompt: str = Form(...)
+        prompt: str = Form(...),
+        mode: Optional[Mode] = Form(default=None)
 ):
     discord_user_client: DiscordUserClient = request.app.state.discord_user_client
     if image:
@@ -55,7 +56,7 @@ async def gen_api(
         image_file = discord.File(io.BytesIO(image_bytes), filename=image.filename)
     else:
         image_file = None
-    interaction = await discord_user_client.gen(prompt=prompt, image=image_file)
+    interaction = await discord_user_client.gen(prompt=prompt, image=image_file, mode=mode)
     print(f"gen, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
 
     if not interaction.successful:
@@ -75,12 +76,13 @@ async def gen_api(
 async def real_api(
         request: Request,
         image: UploadFile = Form(...),
-        prompt: Optional[str] = Form(default=None)
+        prompt: Optional[str] = Form(default=None),
+        mode: Optional[Mode] = Form(default=None)
 ):
     discord_user_client: DiscordUserClient = request.app.state.discord_user_client
     image_bytes = await image.read()
     image_file = discord.File(io.BytesIO(image_bytes), filename=image.filename)
-    interaction = await discord_user_client.real(prompt=prompt, image=image_file)
+    interaction = await discord_user_client.real(prompt=prompt, image=image_file, mode=mode)
     print(f"real, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
 
     if not interaction.successful:
@@ -102,12 +104,19 @@ async def animate_api(
         image: UploadFile = Form(...),
         length: AnimateLength = Form(...),
         intensity: AnimateIntensity = Form(...),
-        prompt: Optional[str] = Form(default=None)
+        prompt: Optional[str] = Form(default=None),
+        mode: Optional[Mode] = Form(default=None)
 ):
     discord_user_client: DiscordUserClient = request.app.state.discord_user_client
     image_bytes = await image.read()
     image_file = discord.File(io.BytesIO(image_bytes), filename=image.filename)
-    interaction = await discord_user_client.animate(prompt=prompt, image=image_file, length=length, intensity=intensity)
+    interaction = await discord_user_client.animate(
+        prompt=prompt,
+        image=image_file,
+        length=length,
+        intensity=intensity,
+        mode=mode
+    )
     print(f"animate, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
 
     if not interaction.successful:
@@ -202,7 +211,8 @@ async def video_api(
         model: VideoModel = Form(...),
         refer_mode: VideoReferMode = Form(...),
         length: VideoLength = Form(...),
-        prompt: str = Form(...)
+        prompt: str = Form(...),
+        mode: Optional[Mode] = Form(default=None)
 ):
     # size_mb = video.size / 1024.0 / 1024.0
     discord_user_client: DiscordUserClient = request.app.state.discord_user_client
@@ -213,7 +223,8 @@ async def video_api(
         video=video_file,
         model=model,
         refer_mode=refer_mode,
-        length=length
+        length=length,
+        mode=mode
     )
     print(f"video, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
 
@@ -237,7 +248,8 @@ async def move_api(
         video: UploadFile,
         model: MoveModel = Form(...),
         length: VideoLength = Form(...),
-        prompt: str = Form(...)
+        prompt: str = Form(...),
+        mode: Optional[Mode] = Form(default=None)
 ):
     # size_mb = video.size / 1024.0 / 1024.0
     discord_user_client: DiscordUserClient = request.app.state.discord_user_client
@@ -250,7 +262,8 @@ async def move_api(
         image=image_file,
         video=video_file,
         model=model,
-        length=length
+        length=length,
+        mode=mode
     )
     print(f"move, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
 

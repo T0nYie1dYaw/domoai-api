@@ -9,7 +9,7 @@ from discord.utils import _generate_nonce
 
 from app.cache import Cache
 from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskAsset, TaskStatus, MoveModel, \
-    TaskCommand, AnimateIntensity, AnimateLength
+    TaskCommand, AnimateIntensity, AnimateLength, Mode
 
 
 class DiscordUserClient(discord.Client):
@@ -251,13 +251,17 @@ class DiscordUserClient(discord.Client):
     async def gen(
             self,
             prompt: str,
-            image: Optional[discord.File] = None
+            image: Optional[discord.File] = None,
+            mode: Optional[Mode] = None
     ) -> Optional[discord.Interaction]:
         command = self.commands.get('gen')
         if not command:
             return None
+        request_prompt = prompt
+        if mode:
+            request_prompt += f" --{mode.value}"
         options = dict(
-            prompt=prompt
+            prompt=request_prompt
         )
         if image:
             uploaded_image_files = await self.channel.upload_files(image)
@@ -270,7 +274,8 @@ class DiscordUserClient(discord.Client):
     async def real(
             self,
             image: discord.File,
-            prompt: Optional[str] = None
+            prompt: Optional[str] = None,
+            mode: Optional[Mode] = None
     ) -> Optional[discord.Interaction]:
         command = self.commands.get('real')
         if not command:
@@ -280,8 +285,15 @@ class DiscordUserClient(discord.Client):
         options = dict(
             image=uploaded_image_files[0]
         )
+        request_prompt_parts = []
         if prompt:
-            options['prompt'] = prompt
+            request_prompt_parts.append(prompt)
+
+        if mode:
+            request_prompt_parts.append(f'--{mode.value}')
+
+        if request_prompt_parts:
+            options['prompt'] = ' '.join(request_prompt_parts)
 
         interaction = await command(self.channel, **options)
         return interaction
@@ -339,7 +351,8 @@ class DiscordUserClient(discord.Client):
             video: discord.File,
             prompt: str,
             model: MoveModel,
-            length: VideoLength
+            length: VideoLength,
+            mode: Optional[Mode] = None
     ) -> Optional[discord.Interaction]:
         command = self.commands.get('move')
         if not command:
@@ -349,8 +362,11 @@ class DiscordUserClient(discord.Client):
 
         uploaded_videos = await self.channel.upload_files(video)
         video.close()
+        request_prompt = f"{prompt} --{model.value} --length {length.value}"
+        if mode:
+            request_prompt += f' --{mode.value}'
         options = dict(
-            prompt=f"{prompt} --{model.value} --length {length.value}",
+            prompt=request_prompt,
             video=uploaded_videos[0],
             image=uploaded_images[0]
         )
@@ -362,7 +378,8 @@ class DiscordUserClient(discord.Client):
             prompt: str,
             model: VideoModel,
             refer_mode: VideoReferMode,
-            length: VideoLength
+            length: VideoLength,
+            mode: Optional[Mode] = None
     ) -> Optional[discord.Interaction]:
         command = self.commands.get('video')
         if not command:
@@ -373,8 +390,11 @@ class DiscordUserClient(discord.Client):
             refer_mode_value = 'p'
         else:
             refer_mode_value = 'v'
+        request_prompt = f"{prompt} --{model.value} --refer {refer_mode_value} --length {length.value}"
+        if mode:
+            request_prompt += f' --{mode.value}'
         options = dict(
-            prompt=f"{prompt} --{model.value} --refer {refer_mode_value} --length {length.value}",
+            prompt=request_prompt,
             video=uploaded_videos[0]
         )
         return await command(self.channel, **options)
@@ -384,7 +404,8 @@ class DiscordUserClient(discord.Client):
             image: discord.File,
             intensity: AnimateIntensity,
             length: AnimateLength,
-            prompt: Optional[str] = None
+            prompt: Optional[str] = None,
+            mode: Optional[Mode] = None
     ) -> Optional[discord.Interaction]:
         command = self.commands.get('animate')
         if not command:
@@ -394,6 +415,8 @@ class DiscordUserClient(discord.Client):
         request_prompt = f"--intensity {intensity.value} --length {length.value}"
         if prompt:
             request_prompt = f"{prompt} " + request_prompt
+        if mode:
+            request_prompt += f' --{mode.value}'
         options = dict(
             prompt=request_prompt,
             image=uploaded_images[0]

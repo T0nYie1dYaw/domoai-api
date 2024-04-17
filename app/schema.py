@@ -7,6 +7,11 @@ import discord
 from pydantic import BaseModel
 
 
+class Mode(enum.Enum):
+    FAST = "fast"
+    RELAX = "relax"
+
+
 class AnimateIntensity(enum.Enum):
     LOW = "low"
     MEDIUM = "mid"
