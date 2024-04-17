@@ -21,4 +21,4 @@ TODO
 - [ ] Multi-Account and Account Pool
 - [ ] Action Queue
 - [ ] Standardized error response format
-- [ ] Dockerfile
+- [x] Dockerfile
