@@ -107,6 +107,42 @@ async def upscale_api(
     return result
 
 
+@app.post("/v1/vary")
+async def vary_api(
+        request: Request,
+        task_id: str = Form(...),
+        index: int = Form(..., ge=1, le=4)
+):
+    discord_user_client: DiscordUserClient = request.app.state.discord_user_client
+
+    cache: Cache = request.app.state.cache
+    data = await cache.get_task_data_by_id(task_id=task_id)
+    if not data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    label = f"V{index}"
+    custom_id = data.vary_custom_ids.get(label)
+    if not custom_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    interaction = await discord_user_client.click_button(custom_id=custom_id, message_id=int(data.message_id))
+    print(f"vary, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
+
+    if not interaction.successful:
+        # TODO:
+        return {"success": interaction.successful}
+
+    result = await __did_send_interaction(
+        wait_message_desc_keyword='Waiting to start',
+        command=TaskCommand.GEN,
+        cache=request.app.state.cache,
+        discord_user_client=discord_user_client
+    )
+    return result
+
+
 @app.post("/v1/video")
 async def video_api(
         request: Request,
