@@ -6,7 +6,7 @@ import streamlit as st
 from pydantic import BaseModel
 
 from app.schema import Mode
-from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons
+from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons, BASE_URL
 
 st.title("Gen")
 
@@ -25,8 +25,8 @@ class Result(BaseModel):
 
 
 async def gen(prompt, image, mode):
-    async with httpx.AsyncClient() as client:
-        response = await client.post('http://127.0.0.1:8000/v1/gen', data={
+    async with httpx.AsyncClient(base_url=BASE_URL) as client:
+        response = await client.post('/v1/gen', data={
             "prompt": prompt,
             "mode": mode if mode != 'auto' else None
         }, files={'image': (image.name, image.read(), image.type)} if image else None, timeout=30)
@@ -41,8 +41,8 @@ async def gen(prompt, image, mode):
 
 
 async def upscale(task_id, index):
-    async with httpx.AsyncClient() as client:
-        response = await client.post('http://127.0.0.1:8000/v1/upscale', data={
+    async with httpx.AsyncClient(base_url=BASE_URL) as client:
+        response = await client.post('/v1/upscale', data={
             "task_id": task_id,
             "index": index
         }, timeout=30)
@@ -57,8 +57,8 @@ async def upscale(task_id, index):
 
 
 async def vary(task_id, index):
-    async with httpx.AsyncClient() as client:
-        response = await client.post('http://127.0.0.1:8000/v1/vary', data={
+    async with httpx.AsyncClient(base_url=BASE_URL) as client:
+        response = await client.post('/v1/vary', data={
             "task_id": task_id,
             "index": index
         }, timeout=30)

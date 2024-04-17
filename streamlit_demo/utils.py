@@ -1,14 +1,17 @@
 import asyncio
+import os
 from typing import Optional, List, Callable
 
 import httpx
 import streamlit as st
 
+BASE_URL = os.environ.get('BASE_URL', 'http://127.0.0.1:8000')
+
 
 async def polling_check_state(task_id: str) -> Optional[dict]:
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(base_url=BASE_URL) as client:
         while True:
-            response = await client.get(f'http://127.0.0.1:8000/v1/task-data/{task_id}')
+            response = await client.get(f'/v1/task-data/{task_id}')
             if response.status_code == 404:
                 return None
             response_json = response.json()

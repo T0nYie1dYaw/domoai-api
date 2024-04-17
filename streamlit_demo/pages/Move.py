@@ -5,14 +5,14 @@ import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from app.schema import VideoLength, MoveModel, Mode
-from streamlit_demo.utils import polling_check_state
+from streamlit_demo.utils import polling_check_state, BASE_URL
 
 st.title("Move")
 
 
 async def run_move(prompt, model, length, video: UploadedFile, image: UploadedFile, mode):
-    async with httpx.AsyncClient() as client:
-        response = await client.post('http://127.0.0.1:8000/v1/move', data={
+    async with httpx.AsyncClient(base_url=BASE_URL) as client:
+        response = await client.post('/v1/move', data={
             "prompt": prompt,
             "model": model,
             "length": length,
