@@ -9,7 +9,7 @@ from discord.utils import _generate_nonce
 
 from app.cache import Cache
 from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskAsset, TaskStatus, MoveModel, \
-    TaskCommand
+    TaskCommand, AnimateIntensity, AnimateLength
 
 
 class DiscordUserClient(discord.Client):
@@ -70,6 +70,8 @@ class DiscordUserClient(discord.Client):
                 await self.handle_gen_result(message=after)
             elif embed.title.startswith('/real'):
                 await self.handle_real_result(message=after)
+            elif embed.title == '/animate':
+                await self.handle_animate_result(message=after)
             elif embed.title == '/video':
                 await self.handle_video_result(message=after)
             elif embed.title == '/move':
@@ -186,6 +188,29 @@ class DiscordUserClient(discord.Client):
 
         await self.cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
             command=TaskCommand.VIDEO,
+            channel_id=str(message.channel.id),
+            guild_id=str(message.guild.id) if message.guild else None,
+            message_id=str(message.id),
+            videos=[asset],
+            status=TaskStatus.SUCCESS
+        ))
+
+    async def handle_animate_result(
+            self,
+            message: discord.Message
+    ):
+        task_id = await self.cache.get_task_id_by_message_id(message_id=str(message.id))
+        if not task_id:
+            return
+
+        if not message.attachments:
+            return
+
+        attachment = message.attachments[0]
+        asset = TaskAsset.from_attachment(attachment)
+
+        await self.cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
+            command=TaskCommand.ANIMATE,
             channel_id=str(message.channel.id),
             guild_id=str(message.guild.id) if message.guild else None,
             message_id=str(message.id),
@@ -351,5 +376,26 @@ class DiscordUserClient(discord.Client):
         options = dict(
             prompt=f"{prompt} --{model.value} --refer {refer_mode_value} --length {length.value}",
             video=uploaded_videos[0]
+        )
+        return await command(self.channel, **options)
+
+    async def animate(
+            self,
+            image: discord.File,
+            intensity: AnimateIntensity,
+            length: AnimateLength,
+            prompt: Optional[str] = None
+    ) -> Optional[discord.Interaction]:
+        command = self.commands.get('animate')
+        if not command:
+            return None
+        uploaded_images = await self.channel.upload_files(image)
+        image.close()
+        request_prompt = f"--intensity {intensity.value} --length {length.value}"
+        if prompt:
+            request_prompt = f"{prompt} " + request_prompt
+        options = dict(
+            prompt=request_prompt,
+            image=uploaded_images[0]
         )
         return await command(self.channel, **options)

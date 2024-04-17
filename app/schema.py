@@ -7,6 +7,17 @@ import discord
 from pydantic import BaseModel
 
 
+class AnimateIntensity(enum.Enum):
+    LOW = "low"
+    MEDIUM = "mid"
+    HIGH = "high"
+
+
+class AnimateLength(enum.Enum):
+    LENGTH_3S = "3s"
+    LENGTH_5S = "5s"
+
+
 class VideoModel(enum.Enum):
     FS_V1 = "fs v1"
     ANI_V1_1 = "ani v1.1"
@@ -79,6 +90,7 @@ class TaskCommand(enum.Enum):
     REAL = "REAL"
     MOVE = "MOVE"
     VIDEO = "VIDEO"
+    ANIMATE = "ANIMATE"
 
 
 class TaskCacheData(BaseModel):
