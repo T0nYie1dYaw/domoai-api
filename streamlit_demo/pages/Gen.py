@@ -207,13 +207,13 @@ if submitted or st.session_state.gen_result:
                 st.session_state.gen_result = asyncio.run(gen(prompt, image))
             task_id, image_url, upscale_indices, vary_indices = st.session_state.gen_result
             result_image.image(image_url)
-            build_upscale_vary_buttons(
-                task_id=task_id,
-                upscale_indices=upscale_indices,
-                vary_indices=vary_indices,
-                on_click_upscale=on_click_upscale,
-                on_click_vary=on_click_vary
-            )
+    build_upscale_vary_buttons(
+        task_id=task_id,
+        upscale_indices=upscale_indices,
+        vary_indices=vary_indices,
+        on_click_upscale=on_click_upscale,
+        on_click_vary=on_click_vary
+    )
 
 for item in st.session_state.uv_results:
     result: Result = item
