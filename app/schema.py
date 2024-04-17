@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import enum
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 import discord
 from pydantic import BaseModel
@@ -88,9 +88,68 @@ class TaskCacheData(BaseModel):
     images: Optional[List[TaskAsset]] = None
     videos: Optional[List[TaskAsset]] = None
     status: TaskStatus
+    upscale_custom_ids: Optional[Dict[str, str]] = None
+    vary_custom_ids: Optional[Dict[str, str]] = None
 
 
 class CreateTaskOut(BaseModel):
     success: bool
     task_id: str
     message_id: str
+
+
+class TaskStateOut(BaseModel):
+    command: TaskCommand
+    channel_id: str
+    guild_id: Optional[str]
+    message_id: str
+    images: Optional[List[TaskAsset]] = None
+    videos: Optional[List[TaskAsset]] = None
+    status: TaskStatus
+    upscale_indices: Optional[List[int]] = None
+    vary_indices: Optional[List[int]] = None
+
+    @staticmethod
+    def from_cache_data(data: TaskCacheData) -> TaskStateOut:
+        upscale_index_map = {
+            "U1": 1,
+            "U2": 2,
+            "U3": 3,
+            "U4": 4
+        }
+        vary_index_map = {
+            "V1": 1,
+            "V2": 2,
+            "V3": 3,
+            "V4": 4
+        }
+        if data.upscale_custom_ids is not None:
+            upscale_indices = []
+            for key, value in data.upscale_custom_ids.items():
+                index = upscale_index_map.get(key)
+                if index is not None:
+                    upscale_indices.append(index)
+            upscale_indices.sort()
+        else:
+            upscale_indices = None
+        if data.vary_custom_ids is not None:
+            vary_indices = []
+            for key, value in data.vary_custom_ids.items():
+                index = vary_index_map.get(key)
+                if index is not None:
+                    vary_indices.append(index)
+            vary_indices.sort()
+        else:
+            vary_indices = None
+
+        return TaskStateOut(
+            command=data.command,
+            channel_id=data.channel_id,
+            guild_id=data.guild_id,
+            message_id=data.message_id,
+            images=data.images,
+            videos=data.videos,
+            status=data.status,
+            upscale_indices=upscale_indices,
+            vary_indices=vary_indices
+        )

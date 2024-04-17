@@ -9,7 +9,7 @@ from starlette import status
 
 from app.cache import RedisCache, MemoryCache, Cache
 from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskStatus, CreateTaskOut, MoveModel, \
-    TaskCommand
+    TaskCommand, TaskStateOut
 from app.settings import get_settings
 from app.user_client import DiscordUserClient
 
@@ -57,6 +57,42 @@ async def gen_api(
         image_file = None
     interaction = await discord_user_client.gen(prompt=prompt, image=image_file)
     print(f"gen, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
+
+    if not interaction.successful:
+        # TODO:
+        return {"success": interaction.successful}
+
+    result = await __did_send_interaction(
+        wait_message_desc_keyword='Waiting to start',
+        command=TaskCommand.GEN,
+        cache=request.app.state.cache,
+        discord_user_client=discord_user_client
+    )
+    return result
+
+
+@app.post("/v1/upscale")
+async def upscale_api(
+        request: Request,
+        task_id: str = Form(...),
+        index: int = Form(..., ge=1, le=4)
+):
+    discord_user_client: DiscordUserClient = request.app.state.discord_user_client
+
+    cache: Cache = request.app.state.cache
+    data = await cache.get_task_data_by_id(task_id=task_id)
+    if not data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    label = f"U{index}"
+    custom_id = data.upscale_custom_ids.get(label)
+    if not custom_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    interaction = await discord_user_client.click_button(custom_id=custom_id, message_id=int(data.message_id))
+    print(f"upscale, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
 
     if not interaction.successful:
         # TODO:
@@ -154,7 +190,7 @@ async def task_data(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
         )
-    return data
+    return TaskStateOut.from_cache_data(data=data)
 
 
 @app.on_event("startup")

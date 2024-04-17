@@ -1,7 +1,11 @@
+import asyncio
 import re
 from typing import Dict, List, Optional
 
 import discord
+from discord import ComponentType, InteractionType, InvalidData
+from discord.http import Route
+from discord.utils import _generate_nonce
 
 from app.cache import Cache
 from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskAsset, TaskStatus, MoveModel, \
@@ -62,7 +66,7 @@ class DiscordUserClient(discord.Client):
             f"message edit, before {before}, after: {after}")
         if after.embeds:
             embed: discord.Embed = after.embeds[0]
-            if embed.title == '/gen':
+            if embed.title.startswith('/gen'):
                 await self.handle_gen_result(message=after)
             elif embed.title == '/video':
                 await self.handle_video_result(message=after)
@@ -98,6 +102,18 @@ class DiscordUserClient(discord.Client):
         task_id = await self.cache.get_task_id_by_message_id(message_id=str(message.id))
         if not task_id:
             return
+        upscale_custom_ids = {}
+        vary_custom_ids = {}
+        for row in message.components:
+            for component in row.children:
+                if component.disabled or not component.label or not component.custom_id:
+                    continue
+                if component.label.startswith("U"):
+                    upscale_custom_ids[component.label] = component.custom_id
+                elif component.label.startswith("Vary"):
+                    vary_custom_ids["V1"] = component.custom_id
+                elif component.label.startswith("V"):
+                    vary_custom_ids[component.label] = component.custom_id
 
         await self.cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
             command=TaskCommand.GEN,
@@ -105,7 +121,9 @@ class DiscordUserClient(discord.Client):
             guild_id=str(message.guild.id) if message.guild else None,
             message_id=str(message.id),
             images=[TaskAsset.from_attachment(attachment)],
-            status=TaskStatus.SUCCESS
+            status=TaskStatus.SUCCESS,
+            upscale_custom_ids=upscale_custom_ids,
+            vary_custom_ids=vary_custom_ids
         ))
 
     async def handle_video_result(
@@ -186,6 +204,53 @@ class DiscordUserClient(discord.Client):
 
         interaction = await command(self.channel, **options)
         return interaction
+
+    async def click_button(
+            self,
+            custom_id: str,
+            message_id: int
+    ) -> Optional[discord.Interaction]:
+        data = {
+            "component_type": ComponentType.button.value,
+            "custom_id": custom_id
+        }
+
+        nonce = _generate_nonce()
+
+        try:
+            payload = {
+                'application_id': self.application_id,
+                'channel_id': self.channel_id,
+                'data': data,
+                'nonce': nonce,
+                'session_id': '44efec80d647a97968b4c60d26d3c032',
+                'type': InteractionType.component.value,
+                'guild_id': self.guild_id,
+                'message_flags': 0,
+                'message_id': message_id
+            }
+            await self.http.request(Route('POST', '/interactions'), json=payload, form=[], files=None)
+            # await self.http.interact(
+            #     type=InteractionType.component,
+            #     nonce=nonce,
+            #     data=data,
+            #     channel=self.channel,
+            #     application_id=self.application_id
+            # )
+            # The maximum possible time a response can take is 3 seconds,
+            # +/- a few milliseconds for network latency
+            # However, people have been getting errors because their gateway
+            # disconnects while waiting for the interaction, causing the
+            # response to be delayed until the gateway is reconnected
+            # 12 seconds should be enough to account for this
+            i = await self.wait_for(
+                'interaction_finish',
+                check=lambda d: d.nonce == nonce,
+                timeout=12,
+            )
+            return i
+        except (asyncio.TimeoutError, asyncio.CancelledError) as exc:
+            raise InvalidData('Did not receive a response from Discord') from exc
 
     async def move(
             self,
