@@ -54,14 +54,17 @@ class DiscordUserClient(discord.Client):
             await message.channel.send('pong')
 
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
+        if after.author.id != self.application_id:
+            return
         print(
             f"message edit, before {before}, after: {after}")
-        if not after.embeds:
-            return
-        embed: discord.Embed = after.embeds[0]
-        if embed.title == '/gen':
-            await self.handle_gen_result(message=after)
-        elif embed.title == '/video':
+        if after.embeds:
+            embed: discord.Embed = after.embeds[0]
+            if embed.title == '/gen':
+                await self.handle_gen_result(message=after)
+            elif embed.title == '/video':
+                await self.handle_video_result(message=after)
+        elif 'After:' in after.content and 'Before:' in after.content:
             await self.handle_video_result(message=after)
 
     async def handle_gen_result(
@@ -96,7 +99,7 @@ class DiscordUserClient(discord.Client):
             attachment = message.attachments[0]
             asset = TaskAsset.from_attachment(attachment)
         else:
-            match = re.match(r"After:.*?(https:.*)", message.content)
+            match = re.search(r"After:.*?(https:.*)", message.content)
             if not match:
                 return
             video_url = match.group(1)
