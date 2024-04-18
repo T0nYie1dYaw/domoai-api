@@ -1,11 +1,11 @@
 DomoAI API
 ===
-**Unofficial** DomoAI API
+**Unofficial** DomoAI API.
 
 Feature
 ---
 
-- Support all AI commands of DomoAI.
+- Support all AI commands of [DomoAI](https://domoai.app/).
     + `/video`
     + `/move`
     + `/animate`
@@ -13,6 +13,7 @@ Feature
     + `/real`
 - Support `upscale` and `vary`
 - Support `FAST` mode and `RELAX` mode
+- Support Docker
 - Streamlit Demo provided
 
 TODO
@@ -21,4 +22,10 @@ TODO
 - [ ] Multi-Account and Account Pool
 - [ ] Action Queue
 - [ ] Standardized error response format
-- [x] Dockerfile
+
+Reference
+---
+
+- [DomoAI Official Website](https://domoai.app/)
+- [Github - discord.py-self](https://github.com/dolfies/discord.py-self)
+- [Github - FastAPI](https://github.com/tiangolo/fastapi)
