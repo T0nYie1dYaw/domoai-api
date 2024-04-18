@@ -5,7 +5,10 @@ from typing import Optional, List, Callable
 import httpx
 import streamlit as st
 
-BASE_URL = os.environ.get('BASE_URL', 'http://127.0.0.1:8000')
+BASE_URL = os.environ.get('STREAMLIT_BASE_URL')
+
+if not BASE_URL:
+    BASE_URL = 'http://127.0.0.1:8000'
 
 
 async def polling_check_state(task_id: str) -> Optional[dict]:

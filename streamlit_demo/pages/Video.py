@@ -5,7 +5,11 @@ import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from app.schema import VideoLength, VideoReferMode, VideoModel, Mode
+from streamlit_demo.auth import check_password
 from streamlit_demo.utils import polling_check_state, BASE_URL
+
+if not check_password():
+    st.stop()
 
 st.title("Video")
 
@@ -59,7 +63,8 @@ if submitted:
         with st.spinner('Wait for completion...'):
             # asyncio.run(asyncio.sleep(5))
             # result_video.video(video)
-            video_url = asyncio.run(run_video(prompt=prompt, refer_mode=refer_mode, model=model, length=length, video=video, mode=mode))
+            video_url = asyncio.run(
+                run_video(prompt=prompt, refer_mode=refer_mode, model=model, length=length, video=video, mode=mode))
             if video_url:
                 result_video.video(video_url)
     st.success('Done!')

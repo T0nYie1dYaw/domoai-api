@@ -6,7 +6,11 @@ import streamlit as st
 from pydantic import BaseModel
 
 from app.schema import Mode
+from streamlit_demo.auth import check_password
 from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons, BASE_URL
+
+if not check_password():
+    st.stop()
 
 st.title("REAL")
 

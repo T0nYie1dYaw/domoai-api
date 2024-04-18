@@ -5,7 +5,11 @@ import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from app.schema import AnimateLength, AnimateIntensity, Mode
+from streamlit_demo.auth import check_password
 from streamlit_demo.utils import polling_check_state, BASE_URL
+
+if not check_password():
+    st.stop()
 
 st.title("Animate")
 
