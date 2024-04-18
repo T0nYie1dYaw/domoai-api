@@ -4,6 +4,7 @@ from typing import Optional, List, Callable
 
 import httpx
 import streamlit as st
+from pydantic import BaseModel
 
 BASE_URL = os.environ.get('STREAMLIT_BASE_URL')
 
@@ -100,3 +101,10 @@ def build_upscale_vary_buttons(
         args=(task_id, 4),
         key=f'V4-{task_id}'
     )
+
+
+class UVResult(BaseModel):
+    task_id: str
+    image_url: str
+    upscale_indices: List[int]
+    vary_indices: List[int]

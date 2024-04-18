@@ -1,13 +1,11 @@
 import asyncio
-from typing import List
 
 import httpx
 import streamlit as st
-from pydantic import BaseModel
 
 from app.schema import Mode
 from streamlit_demo.auth import check_password
-from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons, BASE_URL
+from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons, BASE_URL, UVResult
 
 if not check_password():
     st.stop()
@@ -19,13 +17,6 @@ if 'real_result' not in st.session_state:
 
 if 'real_uv_results' not in st.session_state:
     st.session_state.real_uv_results = []
-
-
-class Result(BaseModel):
-    task_id: str
-    image_url: str
-    upscale_indices: List[int]
-    vary_indices: List[int]
 
 
 async def real(prompt, image, mode):
@@ -97,7 +88,7 @@ with st.form("real_form", border=False):
 def on_click_upscale(task_id: str, index: int):
     with st.spinner('Wait for completion...'):
         task_id, images_url, upscale_indices, vary_indices = asyncio.run(upscale(task_id=task_id, index=index))
-    st.session_state.real_uv_results.append(Result(
+    st.session_state.real_uv_results.append(UVResult(
         task_id=task_id,
         image_url=images_url,
         upscale_indices=upscale_indices,
@@ -108,7 +99,7 @@ def on_click_upscale(task_id: str, index: int):
 def on_click_vary(task_id: str, index: int):
     with st.spinner('Wait for completion...'):
         task_id, images_url, upscale_indices, vary_indices = asyncio.run(vary(task_id=task_id, index=index))
-    st.session_state.real_uv_results.append(Result(
+    st.session_state.real_uv_results.append(UVResult(
         task_id=task_id,
         image_url=images_url,
         upscale_indices=upscale_indices,
@@ -148,7 +139,7 @@ if submitted or st.session_state.real_result:
     )
 
 for item in st.session_state.real_uv_results:
-    result: Result = item
+    result: UVResult = item
     st.image(result.image_url)
     build_upscale_vary_buttons(
         task_id=result.task_id,

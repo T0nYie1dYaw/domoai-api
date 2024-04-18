@@ -9,7 +9,7 @@ from starlette import status
 
 from app.cache import RedisCache, MemoryCache, Cache
 from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskStatus, CreateTaskOut, MoveModel, \
-    TaskCommand, TaskStateOut, AnimateLength, AnimateIntensity, Mode
+    TaskCommand, TaskStateOut, AnimateLength, AnimateIntensity, Mode, GenModel
 from app.settings import get_settings
 from app.user_client import DiscordUserClient
 
@@ -48,7 +48,8 @@ async def gen_api(
         request: Request,
         image: Optional[UploadFile] = None,
         prompt: str = Form(...),
-        mode: Optional[Mode] = Form(default=None)
+        mode: Optional[Mode] = Form(default=None),
+        model: Optional[GenModel] = Form(default=None)
 ):
     discord_user_client: DiscordUserClient = request.app.state.discord_user_client
     if image:
@@ -56,7 +57,7 @@ async def gen_api(
         image_file = discord.File(io.BytesIO(image_bytes), filename=image.filename)
     else:
         image_file = None
-    interaction = await discord_user_client.gen(prompt=prompt, image=image_file, mode=mode)
+    interaction = await discord_user_client.gen(prompt=prompt, image=image_file, mode=mode, model=model)
     print(f"gen, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
 
     if not interaction.successful:

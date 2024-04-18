@@ -9,7 +9,7 @@ from discord.utils import _generate_nonce
 
 from app.cache import Cache
 from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskAsset, TaskStatus, MoveModel, \
-    TaskCommand, AnimateIntensity, AnimateLength, Mode
+    TaskCommand, AnimateIntensity, AnimateLength, Mode, GenModel
 
 
 class DiscordUserClient(discord.Client):
@@ -252,7 +252,8 @@ class DiscordUserClient(discord.Client):
             self,
             prompt: str,
             image: Optional[discord.File] = None,
-            mode: Optional[Mode] = None
+            mode: Optional[Mode] = None,
+            model: Optional[GenModel] = None
     ) -> Optional[discord.Interaction]:
         command = self.commands.get('gen')
         if not command:
@@ -260,6 +261,8 @@ class DiscordUserClient(discord.Client):
         request_prompt = prompt
         if mode:
             request_prompt += f" --{mode.value}"
+        if model:
+            request_prompt += f" --{model}"
         options = dict(
             prompt=request_prompt
         )

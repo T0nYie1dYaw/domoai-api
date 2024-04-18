@@ -1,13 +1,13 @@
 import asyncio
-from typing import List
+from typing import Optional
 
 import httpx
 import streamlit as st
-from pydantic import BaseModel
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from app.schema import Mode
+from app.schema import Mode, GenModel
 from streamlit_demo.auth import check_password
-from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons, BASE_URL
+from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons, BASE_URL, UVResult
 
 if not check_password():
     st.stop()
@@ -21,19 +21,20 @@ if 'gen_uv_results' not in st.session_state:
     st.session_state.gen_uv_results = []
 
 
-class Result(BaseModel):
-    task_id: str
-    image_url: str
-    upscale_indices: List[int]
-    vary_indices: List[int]
-
-
-async def gen(prompt, image, mode):
+async def gen(prompt: str, image: Optional[UploadedFile], mode: str, model: Optional[str]):
     async with httpx.AsyncClient(base_url=BASE_URL) as client:
-        response = await client.post('/v1/gen', data={
+        data = {
             "prompt": prompt,
             "mode": mode if mode != 'auto' else None
-        }, files={'image': (image.name, image.read(), image.type)} if image else None, timeout=30)
+        }
+        if model:
+            data['model'] = model
+        response = await client.post(
+            '/v1/gen',
+            data=data,
+            files={'image': (image.name, image.read(), image.type)} if image else None,
+            timeout=30
+        )
         if not response.is_success:
             st.error(f"Generate Fail: {response}")
             return None
@@ -80,13 +81,20 @@ with st.form("gen_form", border=False):
     mode = st.radio(label="Mode(*)", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
     prompt = st.text_area(label="Prompt(*)")
     image = st.file_uploader(label="Reference Image", type=['jpg', 'png'])
+    gen_models_value = [''] + list(map(lambda x: x.value, GenModel))
+
+    model = st.selectbox(
+        label="Model",
+        options=gen_models_value
+    )
+
     submitted = st.form_submit_button("Submit")
 
 
 def on_click_upscale(task_id: str, index: int):
     with st.spinner('Wait for completion...'):
         task_id, images_url, upscale_indices, vary_indices = asyncio.run(upscale(task_id=task_id, index=index))
-    st.session_state.gen_uv_results.append(Result(
+    st.session_state.gen_uv_results.append(UVResult(
         task_id=task_id,
         image_url=images_url,
         upscale_indices=upscale_indices,
@@ -97,7 +105,7 @@ def on_click_upscale(task_id: str, index: int):
 def on_click_vary(task_id: str, index: int):
     with st.spinner('Wait for completion...'):
         task_id, images_url, upscale_indices, vary_indices = asyncio.run(vary(task_id=task_id, index=index))
-    st.session_state.gen_uv_results.append(Result(
+    st.session_state.gen_uv_results.append(UVResult(
         task_id=task_id,
         image_url=images_url,
         upscale_indices=upscale_indices,
@@ -137,7 +145,7 @@ if submitted or st.session_state.gen_result:
     )
 
 for item in st.session_state.gen_uv_results:
-    result: Result = item
+    result: UVResult = item
     st.image(result.image_url)
     build_upscale_vary_buttons(
         task_id=result.task_id,
