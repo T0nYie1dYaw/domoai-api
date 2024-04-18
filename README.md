@@ -2,6 +2,8 @@ DomoAI API
 ===
 **Unofficial** DomoAI API.
 
+[中文说明/Chinese Documentation](README_CN.md)
+
 Feature
 ---
 
@@ -22,6 +24,7 @@ TODO
 - [ ] Multi-Account and Account Pool
 - [ ] Action Queue
 - [ ] Standardized error response format
+- [ ] Usage documentation
 
 Reference
 ---
