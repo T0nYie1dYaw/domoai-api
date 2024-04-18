@@ -32,16 +32,16 @@ async def run_animate(prompt, intensity, length, image: UploadedFile, mode):
     return result['videos'][0]['proxy_url']
 
 
-with st.form("video_form", border=True):
-    mode = st.radio(label="Mode", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
+with st.form("real_form", border=True):
+    mode = st.radio(label="Mode(*)", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
 
-    length = st.radio(label="Length", options=list(map(lambda x: x.value, AnimateLength)), horizontal=True)
+    length = st.radio(label="Length(*)", options=list(map(lambda x: x.value, AnimateLength)), horizontal=True)
 
-    intensity = st.radio(label="Intensity", options=list(map(lambda x: x.value, AnimateIntensity)), horizontal=True)
+    intensity = st.radio(label="Intensity(*)", options=list(map(lambda x: x.value, AnimateIntensity)), horizontal=True)
+
+    image = st.file_uploader(label="Source Image(*)", type=['jpg', 'png'])
 
     prompt = st.text_area(label="Prompt")
-
-    image = st.file_uploader(label="Source Image", type=['jpg', 'png'])
 
     submitted = st.form_submit_button("Submit")
 

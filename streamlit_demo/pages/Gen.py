@@ -17,8 +17,8 @@ st.title("Gen")
 if 'gen_result' not in st.session_state:
     st.session_state.gen_result = None
 
-if 'uv_results' not in st.session_state:
-    st.session_state.uv_results = []
+if 'gen_uv_results' not in st.session_state:
+    st.session_state.gen_uv_results = []
 
 
 class Result(BaseModel):
@@ -77,8 +77,8 @@ async def vary(task_id, index):
 
 
 with st.form("gen_form", border=False):
-    mode = st.radio(label="Mode", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
-    prompt = st.text_area(label="Prompt")
+    mode = st.radio(label="Mode(*)", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
+    prompt = st.text_area(label="Prompt(*)")
     image = st.file_uploader(label="Reference Image", type=['jpg', 'png'])
     submitted = st.form_submit_button("Submit")
 
@@ -86,7 +86,7 @@ with st.form("gen_form", border=False):
 def on_click_upscale(task_id: str, index: int):
     with st.spinner('Wait for completion...'):
         task_id, images_url, upscale_indices, vary_indices = asyncio.run(upscale(task_id=task_id, index=index))
-    st.session_state.uv_results.append(Result(
+    st.session_state.gen_uv_results.append(Result(
         task_id=task_id,
         image_url=images_url,
         upscale_indices=upscale_indices,
@@ -97,7 +97,7 @@ def on_click_upscale(task_id: str, index: int):
 def on_click_vary(task_id: str, index: int):
     with st.spinner('Wait for completion...'):
         task_id, images_url, upscale_indices, vary_indices = asyncio.run(vary(task_id=task_id, index=index))
-    st.session_state.uv_results.append(Result(
+    st.session_state.gen_uv_results.append(Result(
         task_id=task_id,
         image_url=images_url,
         upscale_indices=upscale_indices,
@@ -136,7 +136,7 @@ if submitted or st.session_state.gen_result:
         on_click_vary=on_click_vary
     )
 
-for item in st.session_state.uv_results:
+for item in st.session_state.gen_uv_results:
     result: Result = item
     st.image(result.image_url)
     build_upscale_vary_buttons(

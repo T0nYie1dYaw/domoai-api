@@ -34,17 +34,20 @@ async def run_video(prompt, refer_mode, model, length, video: UploadedFile, mode
 
 
 with st.form("video_form", border=True):
-    mode = st.radio(label="Mode", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
+    mode = st.radio(label="Mode(*)", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
 
-    length = st.radio(label="Length", options=list(map(lambda x: x.value, VideoLength)), horizontal=True)
+    length = st.radio(label="Length(*)", options=list(map(lambda x: x.value, VideoLength)), horizontal=True)
 
-    refer_mode = st.radio(label="Refer Mode", options=list(map(lambda x: x.value, VideoReferMode)), horizontal=True)
+    refer_mode = st.radio(label="Refer Mode(*)", options=list(map(lambda x: x.value, VideoReferMode)), horizontal=True)
 
-    model = st.selectbox(label="Model", options=list(map(lambda x: x.value, VideoModel)))
+    video_models_value = list(map(lambda x: x.value, VideoModel))
 
-    prompt = st.text_area(label="Prompt")
+    model = st.selectbox(label="Model(*)", options=video_models_value,
+                         index=video_models_value.index(VideoModel.ANI_V1.value))
 
-    video = st.file_uploader(label="Source Video", type=['mp4'])
+    prompt = st.text_area(label="Prompt(*)")
+
+    video = st.file_uploader(label="Source Video(*)", type=['mp4'])
 
     submitted = st.form_submit_button("Submit")
 

@@ -34,16 +34,16 @@ async def run_move(prompt, model, length, video: UploadedFile, image: UploadedFi
 
 
 with st.form("move_form", border=True):
-    mode = st.radio(label="Mode", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
+    mode = st.radio(label="Mode(*)", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
 
-    length = st.radio(label="Length", options=list(map(lambda x: x.value, VideoLength)), horizontal=True)
+    length = st.radio(label="Length(*)", options=list(map(lambda x: x.value, VideoLength)), horizontal=True)
 
-    model = st.selectbox(label="Model", options=list(map(lambda x: x.value, MoveModel)))
+    model = st.selectbox(label="Model(*)", options=list(map(lambda x: x.value, MoveModel)))
 
-    prompt = st.text_area(label="Prompt")
+    prompt = st.text_area(label="Prompt(*)")
 
-    image = st.file_uploader(label="Source Image", type=['jpg', 'png'])
-    video = st.file_uploader(label="Source Video", type=['mp4'])
+    image = st.file_uploader(label="Source Image(*)", type=['jpg', 'png'])
+    video = st.file_uploader(label="Source Video(*)", type=['mp4'])
 
     submitted = st.form_submit_button("Submit")
 

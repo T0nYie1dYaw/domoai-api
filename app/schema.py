@@ -24,7 +24,6 @@ class AnimateLength(enum.Enum):
 
 
 class VideoModel(enum.Enum):
-    FS_V1 = "fs v1"
     ANI_V1_1 = "ani v1.1"
     ANI_V4_1 = "ani v4.1"
     ANI_V5_1 = "ani v5.1"
@@ -44,6 +43,7 @@ class VideoModel(enum.Enum):
     ILLUS_V6 = "illus v6"
     ILLUS_V7 = "illus v7"
     ILLUS_V8 = "illus v8"
+    FS_V1 = "fs v1"
 
 
 class MoveModel(enum.Enum):
