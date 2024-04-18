@@ -133,7 +133,7 @@ if submitted or st.session_state.gen_result:
     with result_col:
         with st.spinner('Wait for completion...'):
             if not st.session_state.gen_result:
-                st.session_state.gen_result = asyncio.run(gen(prompt, image, mode))
+                st.session_state.gen_result = asyncio.run(gen(prompt, image, mode, model))
             task_id, image_url, upscale_indices, vary_indices = st.session_state.gen_result
             result_image.image(image_url)
     build_upscale_vary_buttons(

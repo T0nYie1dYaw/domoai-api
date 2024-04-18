@@ -262,7 +262,7 @@ class DiscordUserClient(discord.Client):
         if mode:
             request_prompt += f" --{mode.value}"
         if model:
-            request_prompt += f" --{model}"
+            request_prompt += f" --{model.value}"
         options = dict(
             prompt=request_prompt
         )
