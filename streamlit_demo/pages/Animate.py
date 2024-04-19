@@ -6,7 +6,7 @@ from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from app.schema import AnimateLength, AnimateIntensity, Mode
 from streamlit_demo.auth import check_password
-from streamlit_demo.utils import polling_check_state, BASE_URL
+from streamlit_demo.utils import polling_check_state, BASE_URL, BASE_HEADERS
 
 if not check_password():
     st.stop()
@@ -15,7 +15,7 @@ st.title("Animate")
 
 
 async def run_animate(prompt, intensity, length, image: UploadedFile, mode):
-    async with httpx.AsyncClient(base_url=BASE_URL) as client:
+    async with httpx.AsyncClient(base_url=BASE_URL, headers=BASE_HEADERS) as client:
         response = await client.post('/v1/animate', data={
             "prompt": prompt,
             "intensity": intensity,

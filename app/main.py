@@ -4,10 +4,11 @@ import uuid
 from typing import Optional
 
 import discord
-from fastapi import FastAPI, Request, UploadFile, Form, HTTPException
+from fastapi import FastAPI, Request, UploadFile, Form, HTTPException, Depends
 from starlette import status
 
 from app.cache import RedisCache, MemoryCache, Cache
+from app.dependencies import api_auth
 from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskStatus, CreateTaskOut, MoveModel, \
     TaskCommand, TaskStateOut, AnimateLength, AnimateIntensity, Mode, GenModel
 from app.settings import get_settings
@@ -46,6 +47,7 @@ async def __did_send_interaction(
 @app.post("/v1/gen")
 async def gen_api(
         request: Request,
+        auth=Depends(api_auth),
         image: Optional[UploadFile] = None,
         prompt: str = Form(...),
         mode: Optional[Mode] = Form(default=None),
@@ -76,6 +78,7 @@ async def gen_api(
 @app.post("/v1/real")
 async def real_api(
         request: Request,
+        auth=Depends(api_auth),
         image: UploadFile = Form(...),
         prompt: Optional[str] = Form(default=None),
         mode: Optional[Mode] = Form(default=None)
@@ -102,6 +105,7 @@ async def real_api(
 @app.post("/v1/animate")
 async def animate_api(
         request: Request,
+        auth=Depends(api_auth),
         image: UploadFile = Form(...),
         length: AnimateLength = Form(...),
         intensity: AnimateIntensity = Form(...),
@@ -136,6 +140,7 @@ async def animate_api(
 @app.post("/v1/upscale")
 async def upscale_api(
         request: Request,
+        auth=Depends(api_auth),
         task_id: str = Form(...),
         index: int = Form(..., ge=1, le=4)
 ):
@@ -172,6 +177,7 @@ async def upscale_api(
 @app.post("/v1/vary")
 async def vary_api(
         request: Request,
+        auth=Depends(api_auth),
         task_id: str = Form(...),
         index: int = Form(..., ge=1, le=4)
 ):
@@ -209,6 +215,7 @@ async def vary_api(
 async def video_api(
         request: Request,
         video: UploadFile,
+        auth=Depends(api_auth),
         model: VideoModel = Form(...),
         refer_mode: VideoReferMode = Form(...),
         length: VideoLength = Form(...),
@@ -247,6 +254,7 @@ async def move_api(
         request: Request,
         image: UploadFile,
         video: UploadFile,
+        auth=Depends(api_auth),
         model: MoveModel = Form(...),
         length: VideoLength = Form(...),
         prompt: str = Form(...),
@@ -285,6 +293,7 @@ async def move_api(
 async def task_data(
         request: Request,
         task_id: str,
+        auth=Depends(api_auth)
 ):
     cache: Cache = request.app.state.cache
     data = await cache.get_task_data_by_id(task_id=task_id)
@@ -308,7 +317,7 @@ async def startup_event():
         channel_id=settings.discord_channel_id,
         application_id=settings.domoai_application_id,
         cache=app.state.cache,
-        event_callbacK_url=settings.event_callback_url
+        event_callback_url=settings.event_callback_url
     )
 
     app.state.discord_user_client = discord_user_client

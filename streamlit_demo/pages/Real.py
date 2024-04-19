@@ -5,7 +5,8 @@ import streamlit as st
 
 from app.schema import Mode
 from streamlit_demo.auth import check_password
-from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons, BASE_URL, UVResult
+from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons, UVResult, BASE_URL, \
+    BASE_HEADERS
 
 if not check_password():
     st.stop()
@@ -20,7 +21,7 @@ if 'real_uv_results' not in st.session_state:
 
 
 async def real(prompt, image, mode):
-    async with httpx.AsyncClient(base_url=BASE_URL) as client:
+    async with httpx.AsyncClient(base_url=BASE_URL, headers=BASE_HEADERS) as client:
         if prompt:
             data = {
                 "prompt": prompt,
@@ -47,7 +48,7 @@ async def real(prompt, image, mode):
 
 
 async def upscale(task_id, index):
-    async with httpx.AsyncClient(base_url=BASE_URL) as client:
+    async with httpx.AsyncClient(base_url=BASE_URL, headers=BASE_HEADERS) as client:
         response = await client.post('/v1/upscale', data={
             "task_id": task_id,
             "index": index
@@ -63,7 +64,7 @@ async def upscale(task_id, index):
 
 
 async def vary(task_id, index):
-    async with httpx.AsyncClient(base_url=BASE_URL) as client:
+    async with httpx.AsyncClient(base_url=BASE_URL, headers=BASE_HEADERS) as client:
         response = await client.post('/v1/vary', data={
             "task_id": task_id,
             "index": index

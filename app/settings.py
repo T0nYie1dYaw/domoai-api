@@ -19,6 +19,8 @@ class Settings(BaseSettings):
 
     cache_prefix: str = 'domoai:'
 
+    api_auth_token: Optional[str] = None
+
 
 @lru_cache()
 def get_settings() -> Settings:

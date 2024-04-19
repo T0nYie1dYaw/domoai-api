@@ -6,7 +6,7 @@ from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from app.schema import VideoLength, MoveModel, Mode
 from streamlit_demo.auth import check_password
-from streamlit_demo.utils import polling_check_state, BASE_URL
+from streamlit_demo.utils import polling_check_state, BASE_URL, BASE_HEADERS
 
 if not check_password():
     st.stop()
@@ -15,7 +15,7 @@ st.title("Move")
 
 
 async def run_move(prompt, model, length, video: UploadedFile, image: UploadedFile, mode):
-    async with httpx.AsyncClient(base_url=BASE_URL) as client:
+    async with httpx.AsyncClient(base_url=BASE_URL, headers=BASE_HEADERS) as client:
         response = await client.post('/v1/move', data={
             "prompt": prompt,
             "model": model,

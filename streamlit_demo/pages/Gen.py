@@ -7,7 +7,8 @@ from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from app.schema import Mode, GenModel
 from streamlit_demo.auth import check_password
-from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons, BASE_URL, UVResult
+from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons, UVResult, BASE_URL, \
+    BASE_HEADERS
 
 if not check_password():
     st.stop()
@@ -22,7 +23,7 @@ if 'gen_uv_results' not in st.session_state:
 
 
 async def gen(prompt: str, image: Optional[UploadedFile], mode: str, model: Optional[str]):
-    async with httpx.AsyncClient(base_url=BASE_URL) as client:
+    async with httpx.AsyncClient(base_url=BASE_URL, headers=BASE_HEADERS) as client:
         data = {
             "prompt": prompt,
             "mode": mode if mode != 'auto' else None
@@ -46,7 +47,7 @@ async def gen(prompt: str, image: Optional[UploadedFile], mode: str, model: Opti
 
 
 async def upscale(task_id, index):
-    async with httpx.AsyncClient(base_url=BASE_URL) as client:
+    async with httpx.AsyncClient(base_url=BASE_URL, headers=BASE_HEADERS) as client:
         response = await client.post('/v1/upscale', data={
             "task_id": task_id,
             "index": index
@@ -62,7 +63,7 @@ async def upscale(task_id, index):
 
 
 async def vary(task_id, index):
-    async with httpx.AsyncClient(base_url=BASE_URL) as client:
+    async with httpx.AsyncClient(base_url=BASE_URL, headers=BASE_HEADERS) as client:
         response = await client.post('/v1/vary', data={
             "task_id": task_id,
             "index": index

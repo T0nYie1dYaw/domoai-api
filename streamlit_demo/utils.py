@@ -8,12 +8,23 @@ from pydantic import BaseModel
 
 BASE_URL = os.environ.get('STREAMLIT_BASE_URL')
 
+API_AUTH_TOKEN = os.environ.get('API_AUTH_TOKEN')
+
 if not BASE_URL:
     BASE_URL = 'http://127.0.0.1:8000'
 
+if API_AUTH_TOKEN:
+    BASE_HEADERS = {
+        'Authorization': f'Bearer {API_AUTH_TOKEN}'
+    }
+else:
+    BASE_HEADERS = {
+
+    }
+
 
 async def polling_check_state(task_id: str) -> Optional[dict]:
-    async with httpx.AsyncClient(base_url=BASE_URL) as client:
+    async with httpx.AsyncClient(base_url=BASE_URL, headers=BASE_HEADERS) as client:
         while True:
             response = await client.get(f'/v1/task-data/{task_id}')
             if response.status_code == 404:
