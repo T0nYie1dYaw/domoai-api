@@ -8,14 +8,24 @@ from discord.http import Route
 from discord.utils import _generate_nonce
 
 from app.cache import Cache
+from app.event_callback import EventCallback
 from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskAsset, TaskStatus, MoveModel, \
     TaskCommand, AnimateIntensity, AnimateLength, Mode, GenModel
 
 
 class DiscordUserClient(discord.Client):
 
-    def __init__(self, channel_id: int, guild_id: int, application_id: int, cache: Cache, **options):
+    def __init__(
+            self,
+            channel_id: int,
+            guild_id: int,
+            application_id: int,
+            cache: Cache,
+            event_callback_url: Optional[str],
+            **options
+    ):
         super().__init__(**options)
+        self.event_callback = EventCallback(callback_url=event_callback_url)
         self.application_id = application_id
         self.commands: Dict[str, discord.SlashCommand] = {}
 
@@ -119,7 +129,7 @@ class DiscordUserClient(discord.Client):
                 elif component.label.startswith("V"):
                     vary_custom_ids[component.label] = component.custom_id
 
-        await self.cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
+        data = TaskCacheData(
             command=TaskCommand.GEN,
             channel_id=str(message.channel.id),
             guild_id=str(message.guild.id) if message.guild else None,
@@ -128,7 +138,9 @@ class DiscordUserClient(discord.Client):
             status=TaskStatus.SUCCESS,
             upscale_custom_ids=upscale_custom_ids,
             vary_custom_ids=vary_custom_ids
-        ))
+        )
+        await self.cache.set_task_id2data(task_id=task_id, data=data)
+        await self.event_callback.send_task_success(task_id=task_id, data=data)
 
     async def handle_real_result(
             self,
@@ -154,7 +166,7 @@ class DiscordUserClient(discord.Client):
                 elif component.label.startswith("V"):
                     vary_custom_ids[component.label] = component.custom_id
 
-        await self.cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
+        data = TaskCacheData(
             command=TaskCommand.REAL,
             channel_id=str(message.channel.id),
             guild_id=str(message.guild.id) if message.guild else None,
@@ -163,7 +175,10 @@ class DiscordUserClient(discord.Client):
             status=TaskStatus.SUCCESS,
             upscale_custom_ids=upscale_custom_ids,
             vary_custom_ids=vary_custom_ids
-        ))
+        )
+
+        await self.cache.set_task_id2data(task_id=task_id, data=data)
+        await self.event_callback.send_task_success(task_id=task_id, data=data)
 
     async def handle_video_result(
             self,
@@ -186,14 +201,17 @@ class DiscordUserClient(discord.Client):
                 proxy_url=video_url
             )
 
-        await self.cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
+        data = TaskCacheData(
             command=TaskCommand.VIDEO,
             channel_id=str(message.channel.id),
             guild_id=str(message.guild.id) if message.guild else None,
             message_id=str(message.id),
             videos=[asset],
             status=TaskStatus.SUCCESS
-        ))
+        )
+
+        await self.cache.set_task_id2data(task_id=task_id, data=data)
+        await self.event_callback.send_task_success(task_id=task_id, data=data)
 
     async def handle_animate_result(
             self,
@@ -209,14 +227,16 @@ class DiscordUserClient(discord.Client):
         attachment = message.attachments[0]
         asset = TaskAsset.from_attachment(attachment)
 
-        await self.cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
+        data = TaskCacheData(
             command=TaskCommand.ANIMATE,
             channel_id=str(message.channel.id),
             guild_id=str(message.guild.id) if message.guild else None,
             message_id=str(message.id),
             videos=[asset],
             status=TaskStatus.SUCCESS
-        ))
+        )
+        await self.cache.set_task_id2data(task_id=task_id, data=data)
+        await self.event_callback.send_task_success(task_id=task_id, data=data)
 
     async def handle_move_result(
             self,
@@ -239,14 +259,16 @@ class DiscordUserClient(discord.Client):
                 proxy_url=video_url
             )
 
-        await self.cache.set_task_id2data(task_id=task_id, data=TaskCacheData(
+        data = TaskCacheData(
             command=TaskCommand.MOVE,
             channel_id=str(message.channel.id),
             guild_id=str(message.guild.id) if message.guild else None,
             message_id=str(message.id),
             videos=[asset],
             status=TaskStatus.SUCCESS
-        ))
+        )
+        await self.cache.set_task_id2data(task_id=task_id, data=data)
+        await self.event_callback.send_task_success(task_id=task_id, data=data)
 
     async def gen(
             self,

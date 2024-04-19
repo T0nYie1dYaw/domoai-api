@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     redis_uri: Optional[str] = None
 
+    event_callback_url: Optional[str] = None
+
     cache_prefix: str = 'domoai:'
 
 

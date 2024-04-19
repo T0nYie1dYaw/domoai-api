@@ -307,7 +307,8 @@ async def startup_event():
         guild_id=settings.discord_guild_id,
         channel_id=settings.discord_channel_id,
         application_id=settings.domoai_application_id,
-        cache=app.state.cache
+        cache=app.state.cache,
+        event_callbacK_url=settings.event_callback_url
     )
 
     app.state.discord_user_client = discord_user_client
