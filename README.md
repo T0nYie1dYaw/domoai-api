@@ -25,8 +25,6 @@ TODO
 - [ ] Action Queue
 - [ ] Standardized error response format
 - [ ] Usage documentation
-- [ ] Event Callback
-  + [x] Task Success
 
 Reference
 ---
