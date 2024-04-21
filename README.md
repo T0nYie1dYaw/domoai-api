@@ -7,16 +7,18 @@ DomoAI API
 Feature
 ---
 
-- Support all AI commands of [DomoAI](https://domoai.app/).
+1. Support all AI commands of [DomoAI](https://domoai.app/).
     + `/video`
     + `/move`
     + `/animate`
     + `/gen`
     + `/real`
-- Support `upscale` and `vary`
-- Support `FAST` mode and `RELAX` mode
-- Support Docker
-- Streamlit Demo provided
+2. Support `upscale` and `vary`
+3. Support `FAST` mode and `RELAX` mode
+4. Support query task status
+5. Support event callback
+6. Support Docker
+7. Streamlit Demo provided
 
 TODO
 ---
