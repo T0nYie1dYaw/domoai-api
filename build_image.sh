@@ -1,0 +1,1 @@
+docker build -t t0nyie1dyaw/domoai-api:latest .

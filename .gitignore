@@ -214,3 +214,4 @@ cython_debug/
 
 .env.*
 !.env.template
+publish*.sh
