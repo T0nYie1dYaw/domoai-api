@@ -23,55 +23,21 @@ class AnimateLength(enum.Enum):
     LENGTH_5S = "5s"
 
 
-class GenModel(enum.Enum):
-    ANI_V1 = 'ani v1'
-    ANI_V2 = 'ani v2'
-    ANI_V3 = 'ani v3'
-    ANI_V4 = 'ani v4'
-    ANI_V5 = 'ani v5'
-    ANI_V6 = 'ani v6'
-    ANI_V7 = 'ani v7'
-    ANIXL_V1 = 'anixl v1'
-    ANIXL_V2 = 'anixl v2'
-    ILLUS_V1 = 'illus v1'
-    ILLUS_V2 = 'illus v2'
-    ILLUSXL_V1 = 'illusxl v1'
-    ILLUSXL_V2 = 'illusxl v2'
-    REAL_V1 = 'real v1'
-    REAL_V2 = 'real v2'
-    REAL_V3 = 'real v3'
-    REALXL_V1 = 'realxl v1'
-    REALXL_V2 = 'realxl v2'
+class BaseModelInfo(BaseModel):
+    name: str
+    prompt_args: str
 
 
-class VideoModel(enum.Enum):
-    ANI_V1_1 = "ani v1.1"
-    ANI_V4_1 = "ani v4.1"
-    ANI_V5_1 = "ani v5.1"
-    ANI_V6 = "ani v6"
-    ANI_V1 = "ani v1"
-    ANI_V2 = "ani v2"
-    ANI_V3 = "ani v3"
-    ANI_V4 = "ani v4"
-    ILLUS_V1_1 = "illus v1.1"
-    ILLUS_V3_1 = "illus v3.1"
-    ILLUS_V7_1 = "illus v7.1"
-    ILLUS_V1 = "illus v1"
-    ILLUS_V2 = "illus v2"
-    ILLUS_V3 = "illus v3"
-    ILLUS_V4 = "illus v4"
-    ILLUS_V5 = "illus v5"
-    ILLUS_V6 = "illus v6"
-    ILLUS_V7 = "illus v7"
-    ILLUS_V8 = "illus v8"
-    FS_V1 = "fs v1"
+class GenModelInfo(BaseModelInfo):
+    pass
 
 
-class MoveModel(enum.Enum):
-    REAL_V1 = "real v1"
-    ANI_V6 = "ani v6"
-    ANI_V2 = "ani v2"
-    ANI_V1_1 = "ani v1.1"
+class MoveModelInfo(BaseModelInfo):
+    pass
+
+
+class VideoModelInfo(BaseModelInfo):
+    pass
 
 
 class VideoReferMode(enum.Enum):

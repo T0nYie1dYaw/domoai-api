@@ -9,8 +9,9 @@ from discord.utils import _generate_nonce
 
 from app.cache import Cache
 from app.event_callback import EventCallback
-from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskAsset, TaskStatus, MoveModel, \
-    TaskCommand, AnimateIntensity, AnimateLength, Mode, GenModel
+from app.models import GenModel, MoveModel, VideoModel
+from app.schema import VideoReferMode, VideoLength, TaskCacheData, TaskAsset, TaskStatus, \
+    TaskCommand, AnimateIntensity, AnimateLength, Mode
 
 
 class DiscordUserClient(discord.Client):

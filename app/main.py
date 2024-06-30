@@ -9,8 +9,9 @@ from starlette import status
 
 from app.cache import RedisCache, MemoryCache, Cache
 from app.dependencies import api_auth
-from app.schema import VideoModel, VideoReferMode, VideoLength, TaskCacheData, TaskStatus, CreateTaskOut, MoveModel, \
-    TaskCommand, TaskStateOut, AnimateLength, AnimateIntensity, Mode, GenModel
+from app.models import GenModel, MoveModel, VideoModel
+from app.schema import VideoReferMode, VideoLength, TaskCacheData, TaskStatus, CreateTaskOut, \
+    TaskCommand, TaskStateOut, AnimateLength, AnimateIntensity, Mode
 from app.settings import get_settings
 from app.user_client import DiscordUserClient
 

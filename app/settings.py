@@ -6,7 +6,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=os.environ.get('ENV_FILE', '.env'), env_file_encoding='utf-8')
+    model_config = SettingsConfigDict(
+        env_file=os.environ.get('ENV_FILE', '.env'),
+        env_file_encoding='utf-8',
+        extra='ignore'
+    )
     discord_token: str
     discord_guild_id: int
     discord_channel_id: int

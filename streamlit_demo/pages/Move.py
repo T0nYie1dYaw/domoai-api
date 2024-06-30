@@ -4,7 +4,8 @@ import httpx
 import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from app.schema import VideoLength, MoveModel, Mode
+from app.models import MoveModel
+from app.schema import VideoLength, Mode
 from streamlit_demo.auth import check_password
 from streamlit_demo.utils import polling_check_state, BASE_URL, BASE_HEADERS
 

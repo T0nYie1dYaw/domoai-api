@@ -5,7 +5,8 @@ import httpx
 import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from app.schema import Mode, GenModel
+from app.models import GenModel
+from app.schema import Mode
 from streamlit_demo.auth import check_password
 from streamlit_demo.utils import polling_check_state, build_upscale_vary_buttons, UVResult, BASE_URL, \
     BASE_HEADERS

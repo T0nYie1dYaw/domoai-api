@@ -4,7 +4,8 @@ import httpx
 import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from app.schema import VideoLength, VideoReferMode, VideoModel, Mode
+from app.models import VideoModel
+from app.schema import VideoLength, VideoReferMode, Mode
 from streamlit_demo.auth import check_password
 from streamlit_demo.utils import polling_check_state, BASE_URL, BASE_HEADERS
 
@@ -43,7 +44,7 @@ with st.form("video_form", border=True):
     video_models_value = list(map(lambda x: x.value, VideoModel))
 
     model = st.selectbox(label="Model(*)", options=video_models_value,
-                         index=video_models_value.index(VideoModel.ANI_V1.value))
+                         index=video_models_value.index(VideoModel.ANIME_V1.value))
 
     prompt = st.text_area(label="Prompt(*)")
 
