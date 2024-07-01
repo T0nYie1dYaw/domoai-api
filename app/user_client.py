@@ -378,7 +378,8 @@ class DiscordUserClient(discord.Client):
             prompt: str,
             model: MoveModel,
             length: VideoLength,
-            mode: Optional[Mode] = None
+            mode: Optional[Mode] = None,
+            video_key: Optional[VideoKey] = None,
     ) -> Optional[discord.Interaction]:
         command = self.commands.get('move')
         if not command:
@@ -391,6 +392,8 @@ class DiscordUserClient(discord.Client):
         request_prompt = f"{prompt} --{model.value} --length {length.value}"
         if mode:
             request_prompt += f' --{mode.value}'
+        if video_key:
+            request_prompt += f'  --key {video_key.value.lower()}'
         options = dict(
             prompt=request_prompt,
             video=uploaded_videos[0],

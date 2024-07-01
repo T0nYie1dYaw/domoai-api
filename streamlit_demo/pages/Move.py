@@ -15,13 +15,14 @@ if not check_password():
 st.title("Move")
 
 
-async def run_move(prompt, model, length, video: UploadedFile, image: UploadedFile, mode):
+async def run_move(prompt, model, length, video: UploadedFile, image: UploadedFile, mode, video_key):
     async with httpx.AsyncClient(base_url=BASE_URL, headers=BASE_HEADERS) as client:
         response = await client.post('/v1/move', data={
             "prompt": prompt,
             "model": model,
             "length": length,
-            "mode": mode if mode != 'auto' else None
+            "mode": mode if mode != 'auto' else None,
+            "video_key": video_key if video_key else None,
         }, files={'video': (video.name, video.read(), video.type), 'image': (image.name, image.read(), image.type)},
                                      timeout=30)
         if not response.is_success:
@@ -40,6 +41,9 @@ with st.form("move_form", border=True):
     length = st.radio(label="Length(*)", options=list(map(lambda x: x.value, VideoLength)), horizontal=True)
 
     model = st.selectbox(label="Model(*)", options=list(map(lambda x: x.value, MoveModel)))
+
+    video_key = st.radio(label="Video Key", options=['None'] + list(map(lambda x: x.value, VideoKey)),
+                         horizontal=True)
 
     prompt = st.text_area(label="Prompt(*)")
 
@@ -69,7 +73,7 @@ if submitted:
             # asyncio.run(asyncio.sleep(5))
             # result_video.video(video)
             video_url = asyncio.run(
-                run_move(prompt=prompt, model=model, length=length, video=video, image=image, mode=mode))
+                run_move(prompt=prompt, model=model, length=length, video=video, image=image, mode=mode, video_key=video_key))
             if video_url:
                 result_video.video(video_url)
     st.success('Done!')

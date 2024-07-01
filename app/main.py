@@ -265,7 +265,8 @@ async def move_api(
         model: MoveModel = Form(...),
         length: VideoLength = Form(...),
         prompt: str = Form(...),
-        mode: Optional[Mode] = Form(default=None)
+        video_key: VideoKey = Form(default=None),
+        mode: Optional[Mode] = Form(default=None),
 ):
     # size_mb = video.size / 1024.0 / 1024.0
     discord_user_client: DiscordUserClient = request.app.state.discord_user_client
@@ -279,7 +280,8 @@ async def move_api(
         video=video_file,
         model=model,
         length=length,
-        mode=mode
+        mode=mode,
+        video_key=video_key,
     )
     print(f"move, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
 
