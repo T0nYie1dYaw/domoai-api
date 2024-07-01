@@ -6,12 +6,13 @@ from typing import Optional
 import discord
 from fastapi import FastAPI, Request, UploadFile, Form, HTTPException, Depends
 from starlette import status
+from starlette.responses import JSONResponse
 
 from app.cache import RedisCache, MemoryCache, Cache
 from app.dependencies import api_auth
-from app.models import GenModel, MoveModel, VideoModel
+from app.models import GenModel, MoveModel, VideoModel, get_v2v_model_info_by_instructions
 from app.schema import VideoReferMode, VideoLength, TaskCacheData, TaskStatus, CreateTaskOut, \
-    TaskCommand, TaskStateOut, AnimateLength, AnimateIntensity, Mode
+    TaskCommand, TaskStateOut, AnimateLength, AnimateIntensity, Mode, VideoKey, VideoApiError
 from app.settings import get_settings
 from app.user_client import DiscordUserClient
 
@@ -216,24 +217,62 @@ async def vary_api(
 async def video_api(
         request: Request,
         video: UploadFile,
+        image: Optional[UploadFile] = None,
         auth=Depends(api_auth),
         model: VideoModel = Form(...),
         refer_mode: VideoReferMode = Form(...),
         length: VideoLength = Form(...),
         prompt: str = Form(...),
-        mode: Optional[Mode] = Form(default=None)
+        video_key: VideoKey = Form(default=None),
+        subject_only: bool = Form(default=None),
+        lip_sync: bool = Form(default=None),
+        mode: Optional[Mode] = Form(default=None),
 ):
     # size_mb = video.size / 1024.0 / 1024.0
     discord_user_client: DiscordUserClient = request.app.state.discord_user_client
     video_bytes = await video.read()
     video_file = discord.File(io.BytesIO(video_bytes), filename=video.filename)
+    image_file = None
+    if image:
+        image_bytes = await image.read()
+        image_file = discord.File(io.BytesIO(image_bytes), filename=image.filename)
+
+    model_info = get_v2v_model_info_by_instructions(model.value)
+    if model_info is None:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"code": VideoApiError.VIDEO_MODEL_ERROR}
+        )
+
+    if refer_mode not in model_info.allowed_refer_modes:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": VideoApiError.NOT_ALLOW_REFER}
+        )
+
+    if not model_info.allowed_lip_sync and lip_sync:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": VideoApiError.NOT_ALLOW_LIP_SYNC}
+        )
+
+    if model_info.allowed_reference_image and image is None:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": VideoApiError.MODEL_NEED_REFERENCE_IMAGE}
+        )
+
     interaction = await discord_user_client.video(
         prompt=prompt,
         video=video_file,
+        image=image_file,
         model=model,
         refer_mode=refer_mode,
         length=length,
-        mode=mode
+        mode=mode,
+        video_key=video_key,
+        subject_only=subject_only,
+        lip_sync=lip_sync,
     )
     print(f"video, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
 
@@ -259,7 +298,8 @@ async def move_api(
         model: MoveModel = Form(...),
         length: VideoLength = Form(...),
         prompt: str = Form(...),
-        mode: Optional[Mode] = Form(default=None)
+        video_key: VideoKey = Form(default=None),
+        mode: Optional[Mode] = Form(default=None),
 ):
     # size_mb = video.size / 1024.0 / 1024.0
     discord_user_client: DiscordUserClient = request.app.state.discord_user_client
@@ -273,7 +313,8 @@ async def move_api(
         video=video_file,
         model=model,
         length=length,
-        mode=mode
+        mode=mode,
+        video_key=video_key,
     )
     print(f"move, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
 

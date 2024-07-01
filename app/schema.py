@@ -37,12 +37,42 @@ class MoveModelInfo(BaseModelInfo):
 
 
 class VideoModelInfo(BaseModelInfo):
-    pass
+    allowed_refer_modes: List[VideoReferMode]
+    allowed_lip_sync: bool
+    allowed_reference_image: bool
 
 
 class VideoReferMode(enum.Enum):
     REFER_TO_SOURCE_VIDEO_MORE = "VIDEO_MORE"
     REFER_TO_MY_PROMPT_MORE = "PROMPT_MORE"
+
+
+class VideoApiError(enum.Enum):
+    VIDEO_MODEL_ERROR: 10000
+    NOT_ALLOW_REFER: 10001
+    NOT_ALLOW_LIP_SYNC: 10002
+    MODEL_NEED_REFERENCE_IMAGE: 10003
+
+
+class VideoKey(enum.Enum):
+    WHITE = "WHITE"
+    BLACK = "BLACK"
+    RED = "RED"
+    ORANGE = "ORANGE"
+    YELLOW = "YELLOW"
+    CYAN = "CYAN"
+    GREEN = "GREEN"
+    BLUE = "BLUE"
+    PINK = "PINK"
+    BROWN = "BROWN"
+    PURPLE = "PURPLE"
+    GREY = "GREY"
+    GRAY = "GRAY"
+    MAGENTA = "MAGENTA"
+    NAVY = "NAVY"
+    BEIGE = "BEIGE"
+    GOLD = "GOLD"
+    SILVER = "SILVER"
 
 
 class VideoLength(enum.Enum):
