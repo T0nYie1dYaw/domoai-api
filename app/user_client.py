@@ -404,6 +404,7 @@ class DiscordUserClient(discord.Client):
     async def video(
             self,
             video: discord.File,
+            image: Optional[discord.File],
             prompt: str,
             model: VideoModel,
             refer_mode: VideoReferMode,
@@ -417,6 +418,9 @@ class DiscordUserClient(discord.Client):
         if not command:
             return None
         uploaded_videos = await self.channel.upload_files(video)
+        uploaded_image = None
+        if image:
+            uploaded_image = await self.channel.upload_files(image)
         video.close()
         if refer_mode == VideoReferMode.REFER_TO_MY_PROMPT_MORE:
             refer_mode_value = 'p'
@@ -435,6 +439,8 @@ class DiscordUserClient(discord.Client):
             prompt=request_prompt,
             video=uploaded_videos[0]
         )
+        if uploaded_image:
+            options['image'] = uploaded_image[0]
         return await command(self.channel, **options)
 
     async def animate(

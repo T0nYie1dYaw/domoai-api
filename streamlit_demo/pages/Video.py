@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 import httpx
 import streamlit as st
@@ -15,9 +16,13 @@ if not check_password():
 st.title("Video")
 
 
-async def run_video(prompt, refer_mode, model, length, video: UploadedFile, mode, video_key, subject_only,
-                    lip_sync):
+async def run_video(prompt, refer_mode, model, length, video: UploadedFile, mode,
+                    video_key, subject_only,
+                    lip_sync, image: Optional[UploadedFile] = None):
     async with httpx.AsyncClient(base_url=BASE_URL, headers=BASE_HEADERS) as client:
+        files = {'video': (video.name, video.read(), video.type)}
+        if image:
+            files['image'] = (image.name, image.read(), image.type)
         response = await client.post('/v1/video', data={
             "prompt": prompt,
             "refer_mode": refer_mode,
@@ -27,15 +32,17 @@ async def run_video(prompt, refer_mode, model, length, video: UploadedFile, mode
             "video_key": video_key if video_key != 'None' else None,
             "subject_only": subject_only,
             "lip_sync": lip_sync,
-        }, files={'video': (video.name, video.read(), video.type)}, timeout=30)
+        }, files=files, timeout=30)
         if not response.is_success:
             st.error(f"Generate Fail: {response}")
             return None
 
-    task_id = response.json()['task_id']
+    task_id = response.json().get('task_id', None)
+    if task_id is None:
+        return False, response.json()
 
     result = await polling_check_state(task_id=task_id)
-    return result['videos'][0]['proxy_url']
+    return True, result['videos'][0]['proxy_url']
 
 
 with st.form("video_form", border=True):
@@ -61,6 +68,8 @@ with st.form("video_form", border=True):
 
     video = st.file_uploader(label="Source Video(*)", type=['mp4'])
 
+    image = st.file_uploader(label="Source Image", type=['jpg', 'jpeg', 'png'])
+
     submitted = st.form_submit_button("Submit")
 
 if submitted:
@@ -69,6 +78,10 @@ if submitted:
         st.text("Source Video")
         if video:
             st.video(video)
+    with source_col:
+        st.text("Source Image")
+        if image:
+            st.image(image)
 
     with result_col:
         st.text("Result Video")
@@ -78,12 +91,15 @@ if submitted:
         with st.spinner('Wait for completion...'):
             # asyncio.run(asyncio.sleep(5))
             # result_video.video(video)
-            video_url = asyncio.run(
+            status, result = asyncio.run(
                 run_video(
                     prompt=prompt, refer_mode=refer_mode, model=model, length=length, video=video, mode=mode,
-                    video_key=video_key, subject_only=subject_only, lip_sync=lip_sync
+                    video_key=video_key, subject_only=subject_only, lip_sync=lip_sync, image=image,
                 )
             )
-            if video_url:
-                result_video.video(video_url)
+            if not status:
+                st.text(result)
+
+            if status and result:
+                result_video.video(result)
     st.success('Done!')

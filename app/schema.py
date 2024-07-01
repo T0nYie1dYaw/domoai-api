@@ -37,7 +37,9 @@ class MoveModelInfo(BaseModelInfo):
 
 
 class VideoModelInfo(BaseModelInfo):
-    pass
+    allowed_refer_modes: List[VideoReferMode]
+    allowed_lip_sync: bool
+    allowed_reference_image: bool
 
 
 class VideoReferMode(enum.Enum):

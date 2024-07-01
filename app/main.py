@@ -9,7 +9,7 @@ from starlette import status
 
 from app.cache import RedisCache, MemoryCache, Cache
 from app.dependencies import api_auth
-from app.models import GenModel, MoveModel, VideoModel
+from app.models import GenModel, MoveModel, VideoModel, get_v2v_model_info_by_instructions
 from app.schema import VideoReferMode, VideoLength, TaskCacheData, TaskStatus, CreateTaskOut, \
     TaskCommand, TaskStateOut, AnimateLength, AnimateIntensity, Mode, VideoKey
 from app.settings import get_settings
@@ -216,6 +216,7 @@ async def vary_api(
 async def video_api(
         request: Request,
         video: UploadFile,
+        image: Optional[UploadFile] = None,
         auth=Depends(api_auth),
         model: VideoModel = Form(...),
         refer_mode: VideoReferMode = Form(...),
@@ -230,9 +231,28 @@ async def video_api(
     discord_user_client: DiscordUserClient = request.app.state.discord_user_client
     video_bytes = await video.read()
     video_file = discord.File(io.BytesIO(video_bytes), filename=video.filename)
+    image_file = None
+    if image:
+        image_bytes = await image.read()
+        image_file = discord.File(io.BytesIO(image_bytes), filename=image.filename)
+
+    model_info = get_v2v_model_info_by_instructions(model.value)
+    if model_info is None:
+        return {"error": "video model error"}
+
+    if refer_mode not in model_info.allowed_refer_modes:
+        return {"error": "refer mode error"}
+
+    if not model_info.allowed_lip_sync and lip_sync:
+        return {"error": "lip sync error"}
+
+    if model_info.allowed_reference_image and image is None:
+        return {"error": "reference image error"}
+
     interaction = await discord_user_client.video(
         prompt=prompt,
         video=video_file,
+        image=image_file,
         model=model,
         refer_mode=refer_mode,
         length=length,

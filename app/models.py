@@ -1,7 +1,7 @@
 import enum
 import os
 from functools import lru_cache
-from typing import List
+from typing import List, Optional
 
 from pydantic import TypeAdapter
 
@@ -35,6 +35,15 @@ def get_gen_models() -> List[GenModelInfo]:
     with open(v2v_models_json_path, 'r') as f:
         models = ta.validate_json(f.read())
     return models
+
+
+@lru_cache()
+def get_v2v_model_info_by_instructions(instructions: str) -> Optional[VideoModelInfo]:
+    all_model_info = get_v2v_models()
+    for model in all_model_info:
+        if instructions in model.prompt_args:
+            return model
+    return None
 
 
 GenModel = enum.Enum(
