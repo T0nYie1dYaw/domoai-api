@@ -245,13 +245,22 @@ async def video_api(
         )
 
     if refer_mode not in model_info.allowed_refer_modes:
-        return {"error": VideoApiError.NOT_ALLOW_REFER}
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": VideoApiError.NOT_ALLOW_REFER}
+        )
 
     if not model_info.allowed_lip_sync and lip_sync:
-        return {"error": VideoApiError.NOT_ALLOW_LIP_SYNC}
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": VideoApiError.NOT_ALLOW_LIP_SYNC}
+        )
 
     if model_info.allowed_reference_image and image is None:
-        return {"error": VideoApiError.MODEL_NEED_REFERENCE_IMAGE}
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": VideoApiError.MODEL_NEED_REFERENCE_IMAGE}
+        )
 
     interaction = await discord_user_client.video(
         prompt=prompt,
