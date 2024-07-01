@@ -45,6 +45,27 @@ class VideoReferMode(enum.Enum):
     REFER_TO_MY_PROMPT_MORE = "PROMPT_MORE"
 
 
+class VideoKey(enum.Enum):
+    WHITE = "WHITE"
+    BLACK = "BLACK"
+    RED = "RED"
+    ORANGE = "ORANGE"
+    YELLOW = "YELLOW"
+    CYAN = "CYAN"
+    GREEN = "GREEN"
+    BLUE = "BLUE"
+    PINK = "PINK"
+    BROWN = "BROWN"
+    PURPLE = "PURPLE"
+    GREY = "GREY"
+    GRAY = "GRAY"
+    MAGENTA = "MAGENTA"
+    NAVY = "NAVY"
+    BEIGE = "BEIGE"
+    GOLD = "GOLD"
+    SILVER = "SILVER"
+
+
 class VideoLength(enum.Enum):
     LENGTH_3S = "3s"
     LENGTH_5S = "5s"

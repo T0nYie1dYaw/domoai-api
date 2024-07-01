@@ -11,7 +11,7 @@ from app.cache import Cache
 from app.event_callback import EventCallback
 from app.models import GenModel, MoveModel, VideoModel
 from app.schema import VideoReferMode, VideoLength, TaskCacheData, TaskAsset, TaskStatus, \
-    TaskCommand, AnimateIntensity, AnimateLength, Mode
+    TaskCommand, AnimateIntensity, AnimateLength, Mode, VideoKey
 
 
 class DiscordUserClient(discord.Client):
@@ -405,7 +405,10 @@ class DiscordUserClient(discord.Client):
             model: VideoModel,
             refer_mode: VideoReferMode,
             length: VideoLength,
-            mode: Optional[Mode] = None
+            mode: Optional[Mode] = None,
+            video_key: Optional[VideoKey] = None,
+            subject_only: Optional[bool] = None,
+            lip_sync: Optional[bool] = None,
     ) -> Optional[discord.Interaction]:
         command = self.commands.get('video')
         if not command:
@@ -419,6 +422,12 @@ class DiscordUserClient(discord.Client):
         request_prompt = f"{prompt} --{model.value} --refer {refer_mode_value} --length {length.value}"
         if mode:
             request_prompt += f' --{mode.value}'
+        if video_key:
+            request_prompt += f'  --key {video_key.value.lower()}'
+        if subject_only:
+            request_prompt += f'  --so'
+        if lip_sync:
+            request_prompt += f'  --lips'
         options = dict(
             prompt=request_prompt,
             video=uploaded_videos[0]

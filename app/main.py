@@ -11,7 +11,7 @@ from app.cache import RedisCache, MemoryCache, Cache
 from app.dependencies import api_auth
 from app.models import GenModel, MoveModel, VideoModel
 from app.schema import VideoReferMode, VideoLength, TaskCacheData, TaskStatus, CreateTaskOut, \
-    TaskCommand, TaskStateOut, AnimateLength, AnimateIntensity, Mode
+    TaskCommand, TaskStateOut, AnimateLength, AnimateIntensity, Mode, VideoKey
 from app.settings import get_settings
 from app.user_client import DiscordUserClient
 
@@ -221,7 +221,10 @@ async def video_api(
         refer_mode: VideoReferMode = Form(...),
         length: VideoLength = Form(...),
         prompt: str = Form(...),
-        mode: Optional[Mode] = Form(default=None)
+        video_key: VideoKey = Form(default=None),
+        subject_only: bool = Form(default=None),
+        lip_sync: bool = Form(default=None),
+        mode: Optional[Mode] = Form(default=None),
 ):
     # size_mb = video.size / 1024.0 / 1024.0
     discord_user_client: DiscordUserClient = request.app.state.discord_user_client
@@ -233,7 +236,10 @@ async def video_api(
         model=model,
         refer_mode=refer_mode,
         length=length,
-        mode=mode
+        mode=mode,
+        video_key=video_key,
+        subject_only=subject_only,
+        lip_sync=lip_sync,
     )
     print(f"video, interaction_id: {interaction.id}, interaction.nonce: {interaction.nonce}")
 
