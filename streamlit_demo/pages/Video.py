@@ -5,7 +5,7 @@ import httpx
 import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from app.models import VideoModel
+from app.models import VideoModel, get_v2v_model_info_by_instructions
 from app.schema import VideoLength, VideoReferMode, Mode, VideoKey
 from streamlit_demo.auth import check_password
 from streamlit_demo.utils import polling_check_state, BASE_URL, BASE_HEADERS
@@ -29,7 +29,7 @@ async def run_video(prompt, refer_mode, model, length, video: UploadedFile, mode
             "model": model,
             "length": length,
             "mode": mode if mode != 'auto' else None,
-            "video_key": video_key if video_key != 'None' else None,
+            "video_key": video_key if video_key != 'None' and subject_only is not True else None,
             "subject_only": subject_only,
             "lip_sync": lip_sync,
         }, files=files, timeout=30)
@@ -45,32 +45,37 @@ async def run_video(prompt, refer_mode, model, length, video: UploadedFile, mode
     return True, result['videos'][0]['proxy_url']
 
 
-with st.form("video_form", border=True):
-    mode = st.radio(label="Mode(*)", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
+mode = st.radio(label="Mode(*)", options=['auto'] + list(map(lambda x: x.value, Mode)), horizontal=True)
 
-    length = st.radio(label="Length(*)", options=list(map(lambda x: x.value, VideoLength)), horizontal=True)
+length = st.radio(label="Length(*)", options=list(map(lambda x: x.value, VideoLength)), horizontal=True)
 
-    refer_mode = st.radio(label="Refer Mode(*)", options=list(map(lambda x: x.value, VideoReferMode)), horizontal=True)
+video_models_value = list(map(lambda x: x.value, VideoModel))
 
-    video_key = st.radio(label="Video Key", options=['None'] + list(map(lambda x: x.value, VideoKey)),
-                         horizontal=True)
+model = st.selectbox(label="Model(*)", options=video_models_value,
+                     index=video_models_value.index(VideoModel.ANIME_V1.value))
 
-    subject_only = st.checkbox(label="Subject Only", key='so')
+model_info = get_v2v_model_info_by_instructions(model)
 
-    lip_sync = st.checkbox(label="Lip Sync", key='lips')
+refer_mode = st.radio(label="Refer Mode(*)",
+                      options=list(map(lambda x: x.value, filter(lambda x: x in model_info.allowed_refer_modes,
+                                                                 list(VideoReferMode)))),
+                      horizontal=True)
 
-    video_models_value = list(map(lambda x: x.value, VideoModel))
+lip_sync = st.checkbox(label="Lip Sync", key='lips', disabled=model_info.allowed_lip_sync is False)
 
-    model = st.selectbox(label="Model(*)", options=video_models_value,
-                         index=video_models_value.index(VideoModel.ANIME_V1.value))
+subject_only = st.checkbox(label="Subject Only", key='so')
 
-    prompt = st.text_area(label="Prompt(*)")
+video_key = st.selectbox(label="Video Key", options=['None'] + list(map(lambda x: x.value, VideoKey)),
+                         disabled=subject_only)
 
-    video = st.file_uploader(label="Source Video(*)", type=['mp4'])
+prompt = st.text_area(label="Prompt(*)")
 
-    image = st.file_uploader(label="Source Image", type=['jpg', 'jpeg', 'png'])
+video = st.file_uploader(label="Source Video(*)", type=['mp4'])
 
-    submitted = st.form_submit_button("Submit")
+if model_info.allowed_reference_image:
+    image = st.file_uploader(label="Source Image(*)", type=['jpg', 'jpeg', 'png'])
+
+submitted = st.button("Submit")
 
 if submitted:
     source_col, result_col = st.columns(2)
