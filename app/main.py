@@ -6,12 +6,13 @@ from typing import Optional
 import discord
 from fastapi import FastAPI, Request, UploadFile, Form, HTTPException, Depends
 from starlette import status
+from starlette.responses import JSONResponse
 
 from app.cache import RedisCache, MemoryCache, Cache
 from app.dependencies import api_auth
 from app.models import GenModel, MoveModel, VideoModel, get_v2v_model_info_by_instructions
 from app.schema import VideoReferMode, VideoLength, TaskCacheData, TaskStatus, CreateTaskOut, \
-    TaskCommand, TaskStateOut, AnimateLength, AnimateIntensity, Mode, VideoKey
+    TaskCommand, TaskStateOut, AnimateLength, AnimateIntensity, Mode, VideoKey, VideoApiError
 from app.settings import get_settings
 from app.user_client import DiscordUserClient
 
@@ -238,16 +239,19 @@ async def video_api(
 
     model_info = get_v2v_model_info_by_instructions(model.value)
     if model_info is None:
-        return {"error": "video model error"}
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"code": VideoApiError.VIDEO_MODEL_ERROR}
+        )
 
     if refer_mode not in model_info.allowed_refer_modes:
-        return {"error": "refer mode error"}
+        return {"error": VideoApiError.NOT_ALLOW_REFER}
 
     if not model_info.allowed_lip_sync and lip_sync:
-        return {"error": "lip sync error"}
+        return {"error": VideoApiError.NOT_ALLOW_LIP_SYNC}
 
     if model_info.allowed_reference_image and image is None:
-        return {"error": "reference image error"}
+        return {"error": VideoApiError.MODEL_NEED_REFERENCE_IMAGE}
 
     interaction = await discord_user_client.video(
         prompt=prompt,

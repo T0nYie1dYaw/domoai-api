@@ -47,6 +47,13 @@ class VideoReferMode(enum.Enum):
     REFER_TO_MY_PROMPT_MORE = "PROMPT_MORE"
 
 
+class VideoApiError(enum.Enum):
+    VIDEO_MODEL_ERROR: 10000
+    NOT_ALLOW_REFER: 10001
+    NOT_ALLOW_LIP_SYNC: 10002
+    MODEL_NEED_REFERENCE_IMAGE: 10003
+
+
 class VideoKey(enum.Enum):
     WHITE = "WHITE"
     BLACK = "BLACK"
