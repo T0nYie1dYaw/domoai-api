@@ -72,6 +72,7 @@ prompt = st.text_area(label="Prompt(*)")
 
 video = st.file_uploader(label="Source Video(*)", type=['mp4'])
 
+image = None
 if model_info.allowed_reference_image:
     image = st.file_uploader(label="Source Image(*)", type=['jpg', 'jpeg', 'png'])
 
