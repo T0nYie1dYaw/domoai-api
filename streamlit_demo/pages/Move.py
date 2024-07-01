@@ -5,7 +5,7 @@ import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from app.models import MoveModel
-from app.schema import VideoLength, Mode
+from app.schema import VideoLength, Mode, VideoKey
 from streamlit_demo.auth import check_password
 from streamlit_demo.utils import polling_check_state, BASE_URL, BASE_HEADERS
 
@@ -22,7 +22,7 @@ async def run_move(prompt, model, length, video: UploadedFile, image: UploadedFi
             "model": model,
             "length": length,
             "mode": mode if mode != 'auto' else None,
-            "video_key": video_key if video_key else None,
+            "video_key": video_key if video_key != 'None' else None,
         }, files={'video': (video.name, video.read(), video.type), 'image': (image.name, image.read(), image.type)},
                                      timeout=30)
         if not response.is_success:
